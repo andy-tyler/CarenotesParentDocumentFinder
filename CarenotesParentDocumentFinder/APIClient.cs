@@ -41,7 +41,6 @@ namespace CarenotesParentDocumentFinder
                 {
                     parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
                     
-                    progress.Report((double)currentPageNumber / _totalPages);
 
                     if (_totalPages > 1)
                     {
@@ -69,6 +68,7 @@ namespace CarenotesParentDocumentFinder
 
                     }
 
+                    progress.Report((double)currentPageNumber / _totalPages);
 
                     return parentDocuments;
                 }
@@ -131,43 +131,50 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
-            var response = apiClient.ExecuteGet(request);
-
-
-            if (response.IsSuccessful)
+            using (var progress = new ProgressBar())
             {
-                communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
 
-                if (_totalPages > 1)
+                var response = apiClient.ExecuteGet(request);
+
+
+                if (response.IsSuccessful)
                 {
-                    currentPageNumber++;
+                    communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
 
-                    while (currentPageNumber <= _totalPages)
+                    if (_totalPages > 1)
                     {
-
-                        pageSize = 1;
-
-                        request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID=1&ReferralStatusId=1&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
-
-                        response = apiClient.ExecuteGet(request);
-
-                        if (response.IsSuccessful)
-                        {
-                            communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
-                        }
-
                         currentPageNumber++;
+
+                        progress.Report((double)currentPageNumber / _totalPages);
+
+                        while (currentPageNumber <= _totalPages)
+                        {
+
+                            pageSize = 1;
+
+                            request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID=1&ReferralStatusId=1&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+                            response = apiClient.ExecuteGet(request);
+
+                            if (response.IsSuccessful)
+                            {
+                                communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
+                            }
+
+                            currentPageNumber++;
+
+                        }
 
                     }
 
+                    progress.Report((double)currentPageNumber / _totalPages);
+
+                    return communityEpisodes;
                 }
-
-
-                return communityEpisodes;
-            }
-            else
-            {
-                throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                else
+                {
+                    throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                }
             }
         }
 
