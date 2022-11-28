@@ -24,7 +24,7 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
 
-            GetPatientIdentifiersFromFile();
+            //GetPatientIdentifiersFromFile();
 
             ProcessStartupParameters(args);
         }
@@ -88,15 +88,18 @@ namespace CarenotesParentDocumentFinder
 
             // 2. Retrieve parent documents for each patient ID and load into a list.
 
+
             foreach (int identifier in patientIdentifiers)
             {
                 List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
 
                 ListParentDocumentDetails(parentDocuments, identifier);
+
+
             }
 
-        }
 
+        }
 
         static List<int> GetPatientIdentifiersFromFile()
         {
@@ -119,7 +122,6 @@ namespace CarenotesParentDocumentFinder
         static void ListParentDocumentDetails(List<ParentDocument> parentDocuments, int patientId)
         {
 
-            // Get episode ID's for each parent document 
             var episodeIds = (from ce in parentDocuments
                               where ce.patientID == patientId
                               where ce.documentTypeID == 52
@@ -152,26 +154,19 @@ namespace CarenotesParentDocumentFinder
                 }
             }
 
-            Console.WriteLine($"\nParent Documents found for patient ID: {patientId}\n");
-
-            Console.WriteLine("Patient ID\tDocument Type ID\tReferral ID\tContextual ID\tDocument ID\tEpisode ID\tActive\tDocument Summary");
-
-            foreach (ParentDocument p in parentDocuments)
-            {
-                Console.WriteLine($"{p.patientID}\t\t{p.documentTypeID}\t\t\t{p.referralId}\t\t{p.contextualId}\t\t{p.documentId}\t\t{p.episodeId}\t{p.active}\t{p.documentSummary}");
-            }
-
             if (mergedEpisodeData.Any())
             {
-                Console.WriteLine("\nActive community episodes found:\n");
+                Console.WriteLine($"\tActive community episodes found for patient ID: {patientId}\n");
 
                 foreach (MergedEpisodeData item in mergedEpisodeData)
                 {
-                    Console.WriteLine($"\n\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}");
+                    Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
                 }
             }
-
-            Console.WriteLine("--------------------------------------------------------------------------------------------------------------------------------------------");
+            else
+            {
+                Console.WriteLine($"\tNo active community episodes were found patient ID: {patientId}\n");
+            }
 
         }
 

@@ -9,6 +9,10 @@ namespace CarenotesParentDocumentFinder
 {
     /// <summary>
     /// An ASCII progress bar
+    /// using (var progress = new ProgressBar())
+    /// {
+    ///     progress.Report((double)currentPageNumber / totalPages);
+    /// }
     /// </summary>
     public class ProgressBar : IDisposable, IProgress<double>
     {

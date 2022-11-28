@@ -30,41 +30,52 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
-            var response = apiClient.ExecuteGet(request);
+            Console.WriteLine($"Requesting parent documents for patient ID: {patientId}");
 
-
-            if (response.IsSuccessful)
+            using (var progress = new ProgressBar())
             {
-                parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
 
-                if (_totalPages > 1)
+                var response = apiClient.ExecuteGet(request);
+
+                if (response.IsSuccessful)
                 {
-                    currentPageNumber++;
+                    parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
+                    
+                    progress.Report((double)currentPageNumber / _totalPages);
 
-                    while (currentPageNumber <= _totalPages)
+                    if (_totalPages > 1)
                     {
-
-                        request = new RestRequest($"parent-documents?PatientId={patientId}&DocumentTypeId={objectTypeId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
-
-                        response = apiClient.ExecuteGet(request);
-
-                        if(response.IsSuccessful)
-                        {
-                            parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
-                        }
-
                         currentPageNumber++;
+
+                        progress.Report((double)currentPageNumber / _totalPages);
+
+                        while (currentPageNumber <= _totalPages)
+                        {
+
+                            request = new RestRequest($"parent-documents?PatientId={patientId}&DocumentTypeId={objectTypeId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+                            request.AddHeader("X-Session-Id", _apiSessionToken);
+
+                            response = apiClient.ExecuteGet(request);
+
+                            if (response.IsSuccessful)
+                            {
+                                parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
+                            }
+
+                            currentPageNumber++;
+
+                        }
 
                     }
 
+
+                    return parentDocuments;
                 }
-
-
-                return parentDocuments;
-            }
-            else
-            {
-                throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                else
+                {
+                    throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                }
             }
         }
 
@@ -81,7 +92,6 @@ namespace CarenotesParentDocumentFinder
             parentDocumentsCount = json.SelectToken("parentDocuments").Count();
 
             _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-
 
             for (int i = 0; i < parentDocumentsCount; i++)
             {
@@ -177,9 +187,9 @@ namespace CarenotesParentDocumentFinder
 
             json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
 
-            if(nx != null)
+            if (nx != null)
                 _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-            
+
             for (int i = 0; i < communityEpisodeCount; i++)
             {
                 communityEpisodes.Add(new CommunityEpisode()
@@ -209,6 +219,8 @@ namespace CarenotesParentDocumentFinder
             var options = new RestClientOptions("http://ahc-demo-cons.adastra.co.uk/api/integration/") { MaxTimeout = -1};
 
             var apiClient = new RestClient(options);
+
+            Console.WriteLine();
 
             Console.Write("Carenotes username: ");
 
@@ -261,6 +273,7 @@ namespace CarenotesParentDocumentFinder
 
             var response = apiClient.ExecutePost(request);
 
+            Console.WriteLine();
 
             if (response.IsSuccessful)
             {
