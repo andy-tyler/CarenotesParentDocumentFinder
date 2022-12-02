@@ -4,7 +4,6 @@ using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Linq.Expressions;
 using System.Net;
 using System.Security;
 
@@ -200,59 +199,51 @@ namespace CarenotesParentDocumentFinder
         public static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent, int patientId)
         {
 
-            try
+
+            List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
+
+            JObject json = JObject.Parse(responseContent);
+
+            var output = JsonConvert.DeserializeObject<object>(json.ToString());
+
+            int communityEpisodeCount = -1;
+
+            communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
+
+            JToken nx;
+
+            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+
+            if (nx != null)
+                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+            for (int i = 0; i < communityEpisodeCount; i++)
             {
-                List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
-
-                JObject json = JObject.Parse(responseContent);
-
-                var output = JsonConvert.DeserializeObject<object>(json.ToString());
-
-                int communityEpisodeCount = -1;
-
-                communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
-
-                JToken nx;
-
-                json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
-
-                if (nx != null)
-                    _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-
-                for (int i = 0; i < communityEpisodeCount; i++)
+                communityEpisodes.Add(new CommunityEpisode()
                 {
-                    communityEpisodes.Add(new CommunityEpisode()
-                    {
-                        episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
+                    episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
 
-                        episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
+                    episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
 
-                        locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
+                    locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
 
-                        referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
+                    referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
 
-                        serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
+                    serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
 
-                        locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
+                    locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
 
-                    });
-                }
-
-                return communityEpisodes;
-
+                });
             }
-            catch (Exception ex)
-            {
-                string n1 = ex.StackTrace;
-                throw;
-            }
+
+            return communityEpisodes;
 
         }
 
         public static void GetSessionToken()
         {
 
-            var options = new RestClientOptions("http://ahc-demo-cons.adastra.co.uk/api/integration/") { MaxTimeout = -1};
+            var options = new RestClientOptions("http://ahc-demo-cons.adastra.co.uk/api/integrationn/") { MaxTimeout = -1};
 
             var apiClient = new RestClient(options);
 
@@ -317,10 +308,15 @@ namespace CarenotesParentDocumentFinder
                 JToken tok = JObject.Parse(response.Content.ToString());
 
                 _apiSessionToken = tok.SelectToken("sessionId").ToString();
-
             }
             else
             {
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                    throw new UriFormatException("API not found at specified URI, check URI in configuration file.");
+                
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    throw new UnauthorizedAccessException("API credentials supplied are invalid.");
+
                 throw new Exception($"Unable to obtain session token from API: {response.ErrorMessage}");
             }
         }

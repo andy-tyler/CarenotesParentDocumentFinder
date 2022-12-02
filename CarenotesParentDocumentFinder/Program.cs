@@ -29,15 +29,23 @@ namespace CarenotesParentDocumentFinder
                 ProcessStartupParameters(args);
 
             }
+            catch(UriFormatException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
+            catch(UnauthorizedAccessException ex)
+            {
+                Console.WriteLine(ex.Message);
+            }
             catch(Exception ex)
             {
                 Console.WriteLine(ex.ToString());
                 Console.WriteLine(ex.Message.ToString());
                 Console.WriteLine(ex.StackTrace.ToString());
-
             }
+            
+            Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
-
 
         }
 
@@ -86,19 +94,14 @@ namespace CarenotesParentDocumentFinder
                         }
                 }
 
-                Console.WriteLine("Processing complete, press any key to exit...");
-                Console.ReadLine();
-
+                Console.WriteLine("Processing complete.");
 
         }
 
         static void ProcessPatientIDFile()
         {
 
-            //GetSessionToken();
-
             APIClient.GetSessionToken();
-
 
             // 1. Get patient ID's from customer supplied CSV file.
 
@@ -106,9 +109,6 @@ namespace CarenotesParentDocumentFinder
 
             // 2. Retrieve parent documents for each patient ID and load into a list.
 
-
-            try
-            {
                 foreach (int identifier in patientIdentifiers)
                 {
                     List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
@@ -116,22 +116,24 @@ namespace CarenotesParentDocumentFinder
                     ListParentDocumentDetails(parentDocuments, identifier);
 
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.StackTrace);
-            }
 
 
         }
 
         static List<int> GetPatientIdentifiersFromFile()
         {
-            string contents = File.ReadAllText(@"C:\Drops\patients.csv");
+            if (_patientIDFilePath != null)
+            {
+                string contents = File.ReadAllText(_patientIDFilePath);
 
-            List<int> identifiers = contents.Split(',').Select(int.Parse).ToList();
+                List<int> identifiers = contents.Split(',').Select(int.Parse).ToList();
 
-            return identifiers;
+                return identifiers;
+            }
+            else
+            {
+                throw new ArgumentNullException("File path for patient identifier CSV is null or missing.");
+            }
         }
 
         static List<ParentDocument> GetParentDocuments(int patientID)
