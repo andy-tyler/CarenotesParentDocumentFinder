@@ -4,6 +4,7 @@ using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Net;
 using System.Security;
 
@@ -21,103 +22,121 @@ namespace CarenotesParentDocumentFinder
 
         public static List<ParentDocument> GetParentDocuments(RestClient apiClient, int patientId, int objectTypeId, int pageSize)
         {
-
-            List<ParentDocument> parentDocuments = new List<ParentDocument>();
-
-            int currentPageNumber = 1;
-
-            RestRequest request = new RestRequest($"parent-documents?PatientId={patientId}&DocumentTypeId={objectTypeId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
-
-            request.AddHeader("X-Session-Id", _apiSessionToken);
-
-            Console.WriteLine($"Requesting parent documents for patient ID: {patientId}");
-
-            using (var progress = new ProgressBar())
+            try
             {
 
-                var response = apiClient.ExecuteGet(request);
+                List<ParentDocument> parentDocuments = new List<ParentDocument>();
 
-                if (response.IsSuccessful)
+                int currentPageNumber = 1;
+
+                RestRequest request = new RestRequest($"parent-documents?PatientId={patientId}&DocumentTypeId={objectTypeId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+                request.AddHeader("X-Session-Id", _apiSessionToken);
+
+                Console.WriteLine($"Requesting parent documents for patient ID: {patientId}");
+
+                using (var progress = new ProgressBar())
                 {
-                    parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
-                    
 
-                    if (_totalPages > 1)
+                    var response = apiClient.ExecuteGet(request);
+
+                    if (response.IsSuccessful)
                     {
-                        currentPageNumber++;
+                        parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
 
-                        progress.Report((double)currentPageNumber / _totalPages);
 
-                        while (currentPageNumber <= _totalPages)
+                        if (_totalPages > 1)
                         {
-
-                            request = new RestRequest($"parent-documents?PatientId={patientId}&DocumentTypeId={objectTypeId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
-
-                            request.AddHeader("X-Session-Id", _apiSessionToken);
-
-                            response = apiClient.ExecuteGet(request);
-
-                            if (response.IsSuccessful)
-                            {
-                                parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
-                            }
-
                             currentPageNumber++;
+
+                            progress.Report((double)currentPageNumber / _totalPages);
+
+                            while (currentPageNumber <= _totalPages)
+                            {
+
+                                request = new RestRequest($"parent-documents?PatientId={patientId}&DocumentTypeId={objectTypeId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+                                request.AddHeader("X-Session-Id", _apiSessionToken);
+
+                                response = apiClient.ExecuteGet(request);
+
+                                if (response.IsSuccessful)
+                                {
+                                    parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
+                                }
+
+                                currentPageNumber++;
+
+                            }
 
                         }
 
+                        progress.Report((double)currentPageNumber / _totalPages);
+
+                        return parentDocuments;
                     }
-
-                    progress.Report((double)currentPageNumber / _totalPages);
-
-                    return parentDocuments;
+                    else
+                    {
+                        throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                    }
                 }
-                else
-                {
-                    throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
-                }
+
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.Message);
+                return null;
             }
         }
 
         public static List<ParentDocument> ParseParentDocumentJson(string responseContent, int patientId)
         {
-            List<ParentDocument> parentDocuments = new List<ParentDocument>();
-
-            JObject json = JObject.Parse(responseContent);
-
-            var output = JsonConvert.DeserializeObject<object>(json.ToString());
-
-            int parentDocumentsCount = -1;
-
-            parentDocumentsCount = json.SelectToken("parentDocuments").Count();
-
-            _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-
-            for (int i = 0; i < parentDocumentsCount; i++)
+            try
             {
-                parentDocuments.Add(new ParentDocument()
+
+                List<ParentDocument> parentDocuments = new List<ParentDocument>();
+
+                JObject json = JObject.Parse(responseContent);
+
+                var output = JsonConvert.DeserializeObject<object>(json.ToString());
+
+                int parentDocumentsCount = -1;
+
+                parentDocumentsCount = json.SelectToken("parentDocuments").Count();
+
+                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+                for (int i = 0; i < parentDocumentsCount; i++)
                 {
-                    patientID = patientId,
+                    parentDocuments.Add(new ParentDocument()
+                    {
+                        patientID = patientId,
 
-                    documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
+                        documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
 
-                    documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
+                        documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
 
-                    documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
+                        documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
 
-                    contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
+                        contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
 
-                    referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
+                        referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
 
-                    episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
+                        episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
 
-                    documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
+                        documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
 
-                    active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
-                });
+                        active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
+                    });
+                }
+
+                return parentDocuments;
             }
-
-            return parentDocuments;
+            catch (Exception ex)
+            {
+                string n1 = ex.StackTrace;
+                throw;
+            }
 
         }
 
@@ -180,43 +199,53 @@ namespace CarenotesParentDocumentFinder
 
         public static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent, int patientId)
         {
-            List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
 
-            JObject json = JObject.Parse(responseContent);
-
-            var output = JsonConvert.DeserializeObject<object>(json.ToString());
-
-            int communityEpisodeCount = -1;
-
-            communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
-
-            JToken nx;
-
-            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
-
-            if (nx != null)
-                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-
-            for (int i = 0; i < communityEpisodeCount; i++)
+            try
             {
-                communityEpisodes.Add(new CommunityEpisode()
+                List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
+
+                JObject json = JObject.Parse(responseContent);
+
+                var output = JsonConvert.DeserializeObject<object>(json.ToString());
+
+                int communityEpisodeCount = -1;
+
+                communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
+
+                JToken nx;
+
+                json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+
+                if (nx != null)
+                    _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+                for (int i = 0; i < communityEpisodeCount; i++)
                 {
-                    episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
+                    communityEpisodes.Add(new CommunityEpisode()
+                    {
+                        episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
 
-                    episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
+                        episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
 
-                    locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
+                        locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
 
-                    referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
+                        referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
 
-                    serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
+                        serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
 
-                    locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
+                        locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
 
-                });
+                    });
+                }
+
+                return communityEpisodes;
+
             }
-
-            return communityEpisodes;
+            catch (Exception ex)
+            {
+                string n1 = ex.StackTrace;
+                throw;
+            }
 
         }
 

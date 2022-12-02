@@ -24,15 +24,25 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
 
-            //GetPatientIdentifiersFromFile();
+            try
+            {
+                ProcessStartupParameters(args);
 
-            ProcessStartupParameters(args);
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine(ex.Message.ToString());
+                Console.WriteLine(ex.StackTrace.ToString());
+
+            }
+            Console.ReadKey();
+
+
         }
 
         static void ProcessStartupParameters(string[] startupArgs)
         {
-            try
-            {
                 if (startupArgs.Length == 0)
                 {
                     Console.WriteLine("No switch has been specified to set the child document type. Re-run with /? for available options.");
@@ -46,12 +56,24 @@ namespace CarenotesParentDocumentFinder
                         }
                     case "/notes":
                         {
+                            if (startupArgs[1] == "-f")
+                            {
+                                if (!String.IsNullOrEmpty(startupArgs[2]))
+                                {
+                                    _patientIDFilePath = startupArgs[2];
+                                    ProcessPatientIDFile();
+                                    break;
+                                }
+                                else
+                                    throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                            }
                             if (startupArgs[3] == "-f")
                             {
                                 if (!String.IsNullOrEmpty(startupArgs[4]))
                                 {
                                     _patientIDFilePath = startupArgs[4];
                                     ProcessPatientIDFile();
+                                    break;
                                 }
                                 else
                                     throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
@@ -67,11 +89,7 @@ namespace CarenotesParentDocumentFinder
                 Console.WriteLine("Processing complete, press any key to exit...");
                 Console.ReadLine();
 
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Exception encountered:\n {ex.Message}");
-            }
+
         }
 
         static void ProcessPatientIDFile()
@@ -89,13 +107,19 @@ namespace CarenotesParentDocumentFinder
             // 2. Retrieve parent documents for each patient ID and load into a list.
 
 
-            foreach (int identifier in patientIdentifiers)
+            try
             {
-                List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
+                foreach (int identifier in patientIdentifiers)
+                {
+                    List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
 
-                ListParentDocumentDetails(parentDocuments, identifier);
+                    ListParentDocumentDetails(parentDocuments, identifier);
 
-
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.StackTrace);
             }
 
 
