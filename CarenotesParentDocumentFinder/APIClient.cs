@@ -1,15 +1,13 @@
-﻿using Newtonsoft.Json;
+﻿using CarenotesParentDocumentFinder.Data;
+using CarenotesParentDocumentFinder.Helpers;
+using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security;
-using CarenotesParentDocumentFinder.Data;
-using CarenotesParentDocumentFinder.Helpers;
-using System.Text;
 
 namespace CarenotesParentDocumentFinder
 {
@@ -22,6 +20,94 @@ namespace CarenotesParentDocumentFinder
         static string _username = string.Empty;
 
         static int _totalPages = -1;
+
+        public static void GetSessionToken(RestClient apiClient)
+        {
+
+            Console.WriteLine();
+
+            Console.Write("Carenotes username: ");
+
+            string userName = Console.ReadLine();
+
+            Console.Write("Carenotes password: ");
+
+            SecureString password = new SecureString();
+
+
+            while (true)
+            {
+                ConsoleKeyInfo consoleKeyInfo;
+                do
+                {
+                    consoleKeyInfo = Console.ReadKey(true);
+                    if (consoleKeyInfo.Key != ConsoleKey.Enter)
+                    {
+                        if (consoleKeyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
+                        {
+                            Console.Write("\b \b");
+                            password.RemoveAt(password.Length - 1);
+                        }
+                    }
+                    else
+                        goto label_6;
+                }
+                while (char.IsControl(consoleKeyInfo.KeyChar));
+                Console.Write("*");
+                password.AppendChar(consoleKeyInfo.KeyChar);
+            }
+
+        label_6:
+            password.MakeReadOnly();
+
+            _username = userName;
+
+            _securePassword = password;
+
+            Console.WriteLine();
+
+
+            NetworkCredential creds = new NetworkCredential(string.Empty, _securePassword);
+
+            RestRequest request = new RestRequest("session.json", Method.Post);
+
+            request.AddParameter("UserName", _username);
+
+            request.AddParameter("Password", new NetworkCredential("", _securePassword).Password);
+
+            var response = apiClient.ExecutePost(request);
+
+            Console.WriteLine();
+
+            if (response.IsSuccessful)
+            {
+
+                JToken tok = JObject.Parse(response.Content.ToString());
+
+                _apiSessionToken = tok.SelectToken("sessionId").ToString();
+            }
+            else
+            {
+                if (response.StatusCode == HttpStatusCode.NotFound)
+                    throw new UriFormatException("API not found at specified URI, check URI in configuration file.");
+
+                if (response.StatusCode == HttpStatusCode.Unauthorized)
+                    throw new UnauthorizedAccessException("API credentials supplied are invalid.");
+
+                throw new Exception($"Unable to obtain session token from API: {response.ErrorMessage}");
+            }
+        }
+
+        public static bool apiIsAvailable(RestClient apiClient)
+        {
+
+            RestRequest request = new RestRequest("ping", Method.Get);
+
+            var response = apiClient.ExecuteGet(request);
+
+            return (response.IsSuccessful);
+
+        }
 
         public static List<ParentDocument> GetParentDocuments(RestClient apiClient, int patientId, int objectTypeId, int pageSize)
         {
@@ -254,93 +340,5 @@ namespace CarenotesParentDocumentFinder
             throw new NotImplementedException("ParseInpatientEpisodeJson has not yet been implemented.");
         }
 
-        public static void GetSessionToken(RestClient apiClient)
-        {
-
-            Console.WriteLine();
-
-            Console.Write("Carenotes username: ");
-
-            string userName = Console.ReadLine();
-
-            Console.Write("Carenotes password: ");
-
-            SecureString password = new SecureString();
-
-
-            while (true)
-            {
-                ConsoleKeyInfo consoleKeyInfo;
-                do
-                {
-                    consoleKeyInfo = Console.ReadKey(true);
-                    if (consoleKeyInfo.Key != ConsoleKey.Enter)
-                    {
-                        if (consoleKeyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
-                        {
-                            Console.Write("\b \b");
-                            password.RemoveAt(password.Length - 1);
-                        }
-                    }
-                    else
-                        goto label_6;
-                }
-                while (char.IsControl(consoleKeyInfo.KeyChar));
-                Console.Write("*");
-                password.AppendChar(consoleKeyInfo.KeyChar);
-            }
-
-        label_6:
-            password.MakeReadOnly();
-
-            _username = userName;
-
-            _securePassword = password;
-
-            Console.WriteLine();
-
-
-            NetworkCredential creds = new NetworkCredential(string.Empty, _securePassword);
-
-            RestRequest request = new RestRequest("session.json", Method.Post);
-
-            request.AddParameter("UserName", _username);
-
-            request.AddParameter("Password", new NetworkCredential("", _securePassword).Password);
-
-            var response = apiClient.ExecutePost(request);
-
-            Console.WriteLine();
-
-            if (response.IsSuccessful)
-            {
-
-                JToken tok = JObject.Parse(response.Content.ToString());
-
-                _apiSessionToken = tok.SelectToken("sessionId").ToString();
-            }
-            else
-            {
-                if (response.StatusCode == HttpStatusCode.NotFound)
-                    throw new UriFormatException("API not found at specified URI, check URI in configuration file.");
-                
-                if (response.StatusCode == HttpStatusCode.Unauthorized)
-                    throw new UnauthorizedAccessException("API credentials supplied are invalid.");
-
-                throw new Exception($"Unable to obtain session token from API: {response.ErrorMessage}");
-            }
-        }
-    
-
-        public static bool apiIsAvailable(RestClient apiClient)
-        {
-
-            RestRequest request = new RestRequest("ping", Method.Get);
-
-            var response = apiClient.ExecuteGet(request);
-
-            return (response.IsSuccessful);
-
-        }
     }
 }
