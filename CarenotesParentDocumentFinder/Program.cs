@@ -1,6 +1,8 @@
-﻿using RestSharp;
+﻿using CarenotesParentDocumentFinder.Data;
+using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.IO;
 using System.Linq;
 
@@ -10,13 +12,11 @@ namespace CarenotesParentDocumentFinder
     {
         static string _patientIDFilePath = string.Empty;
 
-        static string _username = string.Empty;
-
         static int _pageSize = 100;
 
         static int _objectTypeID = 50;
 
-        static RestClient _apiClient = new RestClient(new RestClientOptions("http://ahc-demo-cons.adastra.co.uk/api/integration/") { MaxTimeout = -1});
+        static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
         static void Main(string[] args)
         {
@@ -24,84 +24,125 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
 
-            try
+            if (APIClient.apiIsAvailable(_apiClient))
             {
-                ProcessStartupParameters(args);
+                try
+                {
+                    ProcessStartupParameters(args);
 
+                }
+                catch (UriFormatException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine(ex.ToString());
+                    Console.WriteLine(ex.Message.ToString());
+                    Console.WriteLine(ex.StackTrace.ToString());
+                }
             }
-            catch(UriFormatException ex)
+            else
             {
-                Console.WriteLine(ex.Message);
+                Console.WriteLine($"The API service at {ConfigurationManager.AppSettings["APIBaseURL"]} is not available, please contact AHC Support for further assistance.");
             }
-            catch(UnauthorizedAccessException ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine(ex.ToString());
-                Console.WriteLine(ex.Message.ToString());
-                Console.WriteLine(ex.StackTrace.ToString());
-            }
-            
-            Console.WriteLine("\nPress any key to exit...");
+
+                Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
 
         }
 
+        /// <summary>
+        /// Processes startup parameters passed in at point of execution.
+        /// Example: /notes -f "c:\drops\randompatientsample.csv"
+        /// </summary>
+        /// <param name="startupArgs"></param>
+        /// <exception cref="FileNotFoundException"></exception>
+        /// <exception cref="ArgumentException"></exception>
         static void ProcessStartupParameters(string[] startupArgs)
         {
-                if (startupArgs.Length == 0)
-                {
-                    Console.WriteLine("No switch has been specified to set the child document type. Re-run with /? for available options.");
-                }
+            if (startupArgs.Length == 0)
+            {
+                Console.WriteLine("No switch has been specified to set the child document type. Re-run with /? for available options.");
+            }
 
-                switch (startupArgs[0])
-                {
-                    case "/?":
-                        {
-                            break;
-                        }
-                    case "/notes":
-                        {
-                            if (startupArgs[1] == "-f")
-                            {
-                                if (!String.IsNullOrEmpty(startupArgs[2]))
-                                {
-                                    _patientIDFilePath = startupArgs[2];
-                                    ProcessPatientIDFile();
-                                    break;
-                                }
-                                else
-                                    throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
-                            }
-                            if (startupArgs[3] == "-f")
-                            {
-                                if (!String.IsNullOrEmpty(startupArgs[4]))
-                                {
-                                    _patientIDFilePath = startupArgs[4];
-                                    ProcessPatientIDFile();
-                                    break;
-                                }
-                                else
-                                    throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
-                            }
-                            break;
-                        }
-                    default:
-                        {
-                            throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
-                        }
-                }
 
-                Console.WriteLine("Processing complete.");
+            if (_patientIDFilePath == String.Empty)
+            {
+                _patientIDFilePath = ConfigurationManager.AppSettings["PatientIDFilePath"].ToString();
+
+            }
+
+            if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize))
+            {
+                _pageSize = 100;
+            }
+
+            switch (startupArgs[0])
+            {
+                case "/?":
+                    {
+                        break;
+                    }
+                case "/notes":
+                    {
+                        if (startupArgs[1] == "-f")
+                        {
+                            if (!String.IsNullOrEmpty(startupArgs[2]))
+                            {
+                                _patientIDFilePath = startupArgs[2];
+
+                                if (!string.IsNullOrEmpty(_patientIDFilePath))
+                                {
+                                    ProcessPatientIDFile();
+                                }
+                                else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+
+                                break;
+                            }
+                            else
+                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                        }
+                        if (startupArgs[3] == "-f")
+                        {
+                            if (!String.IsNullOrEmpty(startupArgs[4]))
+                            {
+                                _patientIDFilePath = startupArgs[4];
+
+                                if (!string.IsNullOrEmpty(_patientIDFilePath))
+                                {
+                                    ProcessPatientIDFile();
+                                }
+                                else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+
+                                break;
+                            }
+                            else
+                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                        }
+                        
+
+
+                        break;
+                    }
+                default:
+                    {
+                        throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
+                    }
+            }
+
+            Console.WriteLine("Processing complete.");
 
         }
 
         static void ProcessPatientIDFile()
         {
 
-            APIClient.GetSessionToken();
+            APIClient.GetSessionToken(_apiClient);
 
             // 1. Get patient ID's from customer supplied CSV file.
 
@@ -109,13 +150,13 @@ namespace CarenotesParentDocumentFinder
 
             // 2. Retrieve parent documents for each patient ID and load into a list.
 
-                foreach (int identifier in patientIdentifiers)
-                {
-                    List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
+            foreach (int identifier in patientIdentifiers)
+            {
+                List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
 
-                    ListParentDocumentDetails(parentDocuments, identifier);
+                ListParentDocumentDetails(parentDocuments, identifier);
 
-                }
+            }
 
 
         }
@@ -195,7 +236,6 @@ namespace CarenotesParentDocumentFinder
             }
 
         }
-
 
     }
 

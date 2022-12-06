@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace CarenotesParentDocumentFinder
+namespace CarenotesParentDocumentFinder.Helpers
 {
     /// <summary>
     /// An ASCII progress bar

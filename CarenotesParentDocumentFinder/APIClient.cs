@@ -5,7 +5,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
+using System.Runtime.InteropServices.WindowsRuntime;
 using System.Security;
+using CarenotesParentDocumentFinder.Data;
+using CarenotesParentDocumentFinder.Helpers;
+using System.Text;
 
 namespace CarenotesParentDocumentFinder
 {
@@ -240,12 +244,18 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static void GetSessionToken()
+        public static List<InpatientEpisode> GetInpatientEpisodes(RestClient apiClinet, int patientId, int pageSize)
         {
+            throw new NotImplementedException("GetInpatientEpisodes has not yet been implemented.");
+        }
 
-            var options = new RestClientOptions("http://ahc-demo-cons.adastra.co.uk/api/integrationn/") { MaxTimeout = -1};
+        public static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent, int patientId)
+        {
+            throw new NotImplementedException("ParseInpatientEpisodeJson has not yet been implemented.");
+        }
 
-            var apiClient = new RestClient(options);
+        public static void GetSessionToken(RestClient apiClient)
+        {
 
             Console.WriteLine();
 
@@ -292,7 +302,7 @@ namespace CarenotesParentDocumentFinder
 
             NetworkCredential creds = new NetworkCredential(string.Empty, _securePassword);
 
-            RestRequest request = new RestRequest("Session.json", Method.Post);
+            RestRequest request = new RestRequest("session.json", Method.Post);
 
             request.AddParameter("UserName", _username);
 
@@ -319,6 +329,18 @@ namespace CarenotesParentDocumentFinder
 
                 throw new Exception($"Unable to obtain session token from API: {response.ErrorMessage}");
             }
+        }
+    
+
+        public static bool apiIsAvailable(RestClient apiClient)
+        {
+
+            RestRequest request = new RestRequest("ping", Method.Get);
+
+            var response = apiClient.ExecuteGet(request);
+
+            return (response.IsSuccessful);
+
         }
     }
 }
