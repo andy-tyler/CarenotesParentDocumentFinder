@@ -126,7 +126,6 @@ namespace CarenotesParentDocumentFinder
 
                 request.AddHeader("X-Session-Id", _apiSessionToken);
 
-                Console.WriteLine($"Requesting parent documents for patient ID: {patientId}");
 
                 using (var progress = new ProgressBar())
                 {

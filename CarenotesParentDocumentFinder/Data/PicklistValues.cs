@@ -28,5 +28,11 @@
             Discharged = 2,
             Rejected = 3 
         }
+
+        public enum OutputMethod
+        {
+            Tabbed = 0,
+            Verbose = 1
+        }
     }
 }

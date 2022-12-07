@@ -18,6 +18,8 @@ namespace CarenotesParentDocumentFinder
 
         static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
+        static int _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
+
         static void Main(string[] args)
         {
             Console.WriteLine("******************************************************");
@@ -51,7 +53,7 @@ namespace CarenotesParentDocumentFinder
                 Console.WriteLine($"The API service at {ConfigurationManager.AppSettings["APIBaseURL"]} is not available, please contact AHC Support for further assistance.");
             }
 
-                Console.WriteLine("\nPress any key to exit...");
+            Console.WriteLine("\nPress any key to exit...");
             Console.ReadKey();
 
         }
@@ -68,6 +70,16 @@ namespace CarenotesParentDocumentFinder
             if (startupArgs.Length == 0)
             {
                 Console.WriteLine("No switch has been specified to set the child document type. Re-run with /? for available options.");
+            }
+
+            if (ConfigurationManager.AppSettings["OutputFormat"] == "Tabbed")
+            {
+                _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
+            }
+
+            if (ConfigurationManager.AppSettings["OutputFormat"] == "Verbose")
+            {
+                _outputFormat = (int)PicklistValues.OutputMethod.Verbose;
             }
 
 
@@ -124,7 +136,7 @@ namespace CarenotesParentDocumentFinder
                             else
                                 throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
                         }
-                        
+
 
 
                         break;
@@ -135,7 +147,7 @@ namespace CarenotesParentDocumentFinder
                     }
             }
 
-            Console.WriteLine("Processing complete.");
+            Console.WriteLine("\nProcessing complete.");
 
         }
 
@@ -151,10 +163,20 @@ namespace CarenotesParentDocumentFinder
             List<int> patientIdentifiers = GetPatientIdentifiersFromFile();
 
             // 2. Retrieve parent documents for each patient ID and load into a list.
+            
+            if (_outputFormat == (int)PicklistValues.OutputMethod.Tabbed)
+            {
+                Console.WriteLine($"Episode Type\t\tPatient ID\tEpisode ID\tLocation ID\tLocation description\t\tCN Doc ID");
+            }
 
             foreach (int identifier in patientIdentifiers)
             {
                 List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
+
+                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                {
+                    Console.WriteLine($"\nRequesting parent documents for patient ID: {identifier}\n");
+                }
 
                 ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
 
@@ -226,16 +248,32 @@ namespace CarenotesParentDocumentFinder
 
             if (mergedEpisodeData.Any())
             {
-                Console.WriteLine($"\tActive community episodes found for patient ID: {patientId}\n");
 
-                foreach (MergedEpisodeData item in mergedEpisodeData)
+                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
                 {
-                    Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
+                    Console.WriteLine($"\tActive community episodes found for patient ID: {patientId}\n");
+
+                    foreach (MergedEpisodeData item in mergedEpisodeData)
+                    {
+                        Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
+                    }
                 }
+                else
+                {
+                    foreach (MergedEpisodeData item in mergedEpisodeData)
+                    {
+                        Console.WriteLine($"Community Episode\t{item.Patient_ID}\t\t{item.Community_Episode_ID}\t\t{item.Community_Episode_Location_ID}\t\t{item.Community_Episode_Location_Description}\t\t\t{item.Parent_CN_Doc_ID}");
+                    }
+                }
+
             }
             else
             {
-                Console.WriteLine($"\tNo active community episodes were found patient ID: {patientId}\n");
+                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                {
+                    Console.WriteLine($"\tNo active community episodes were found patient ID: {patientId}\n");
+                }
+
             }
 
         }
@@ -277,16 +315,31 @@ namespace CarenotesParentDocumentFinder
 
             if (mergedEpisodeData.Any())
             {
-                Console.WriteLine($"\tActive inpatient episodes found for patient ID: {patientId}\n");
 
-                foreach (MergedEpisodeData item in mergedEpisodeData)
+                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
                 {
-                    Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
+                    Console.WriteLine($"\tActive inpatient episodes found for patient ID: {patientId}\n");
+
+                    foreach (MergedEpisodeData item in mergedEpisodeData)
+                    {
+                        Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
+                    }
                 }
+                else
+                {
+                    foreach (MergedEpisodeData item in mergedEpisodeData)
+                    {
+                        Console.WriteLine($"Inpatient episode\t{item.Patient_ID}\t\t{item.Community_Episode_ID}\t\t{item.Community_Episode_Location_ID}\t\t{item.Community_Episode_Location_Description}\t\t\t{item.Parent_CN_Doc_ID}");
+                    }
+                }
+
             }
             else
             {
-                Console.WriteLine($"\tNo active inpatient episodes were found patient ID: {patientId}\n");
+                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                {
+                    Console.WriteLine($"\tNo active inpatient episodes were found patient ID: {patientId}\n");
+                }
             }
 
         }
