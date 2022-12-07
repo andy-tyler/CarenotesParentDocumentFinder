@@ -289,7 +289,6 @@ namespace CarenotesParentDocumentFinder
         public static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent, int patientId)
         {
 
-
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
 
             JObject json = JObject.Parse(responseContent);
@@ -330,14 +329,108 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static List<InpatientEpisode> GetInpatientEpisodes(RestClient apiClinet, int patientId, int pageSize)
+        public static List<InpatientEpisode> GetInpatientEpisodes(RestClient apiClient, int patientId, int pageSize)
         {
-            throw new NotImplementedException("GetInpatientEpisodes has not yet been implemented.");
+            int episodeTypeId = 1;
+
+            int referralStatusId = 1;
+
+            List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
+
+            int currentPageNumber = 1;
+
+            RestRequest request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={episodeTypeId}&ReferralStatusId={referralStatusId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+            request.AddHeader("X-Session-Id", _apiSessionToken);
+
+            using (var progress = new ProgressBar())
+            {
+
+                var response = apiClient.ExecuteGet(request);
+
+                if (response.IsSuccessful)
+                {
+                    inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content, patientId));
+
+                    if (_totalPages > 1)
+                    {
+                        currentPageNumber++;
+
+                        progress.Report((double)currentPageNumber / _totalPages);
+
+                        while (currentPageNumber <= _totalPages)
+                        {
+
+                            pageSize = 1;
+
+                            request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={episodeTypeId}&ReferralStatusId={referralStatusId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+                            response = apiClient.ExecuteGet(request);
+
+                            if (response.IsSuccessful)
+                            {
+                                inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content, patientId));
+                            }
+
+                            currentPageNumber++;
+
+                        }
+
+                    }
+
+                    progress.Report((double)currentPageNumber / _totalPages);
+
+                    return inpatientEpisodes;
+                }
+                else
+                {
+                    throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                }
+            }
+
+
         }
 
         public static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent, int patientId)
         {
-            throw new NotImplementedException("ParseInpatientEpisodeJson has not yet been implemented.");
+
+            List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
+
+            JObject json = JObject.Parse(responseContent);
+
+            var output = JsonConvert.DeserializeObject<object>(json.ToString());
+
+            int communityEpisodeCount = -1;
+
+            communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
+
+            JToken nx;
+
+            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+
+            if (nx != null)
+                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+            for (int i = 0; i < communityEpisodeCount; i++)
+            {
+                inpatientEpisodes.Add(new InpatientEpisode()
+                {
+                    //episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
+
+                    //episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
+
+                    //locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
+
+                    //referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
+
+                    //serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
+
+                    //locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
+
+                });
+            }
+
+            return inpatientEpisodes;
         }
 
     }
