@@ -142,6 +142,8 @@ namespace CarenotesParentDocumentFinder
         static void ProcessPatientIDFile()
         {
 
+            Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
+
             APIClient.GetSessionToken(_apiClient);
 
             // 1. Get patient ID's from customer supplied CSV file.
@@ -154,10 +156,11 @@ namespace CarenotesParentDocumentFinder
             {
                 List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
 
-                ListParentDocumentDetails(parentDocuments, identifier);
+                ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
+
+                ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
 
             }
-
 
         }
 
@@ -186,7 +189,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        static void ListParentDocumentDetails(List<ParentDocument> parentDocuments, int patientId)
+        static void ListCommunityEpisodeParentDocuments(List<ParentDocument> parentDocuments, int patientId)
         {
 
             var episodeIds = (from ce in parentDocuments
@@ -237,6 +240,56 @@ namespace CarenotesParentDocumentFinder
 
         }
 
+        static void ListInpatientEpisodeParentDocuments(List<ParentDocument> parentDocuments, int patientId)
+        {
+
+            var episodeIds = (from ce in parentDocuments
+                              where ce.patientID == patientId
+                              where ce.documentTypeID == 75
+                              select ce.episodeId).Distinct().ToList();
+
+            List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
+
+            List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+
+            foreach (int? episodeId in episodeIds)
+            {
+                if (episodeId != null)
+                {
+
+                    inpatientEpisodes = APIClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
+
+                    mergedEpisodeData = (from c in inpatientEpisodes
+                                         join p in parentDocuments
+                                         on c.episodeID equals p.contextualId
+                                         select new MergedEpisodeData
+                                         {
+                                             Contextual_ID = p.contextualId,
+                                             Community_Episode_ID = c.episodeID,
+                                             Community_Episode_Location_ID = c.locationID,
+                                             Community_Episode_Location_Description = c.locationDesc,
+                                             Parent_CN_Doc_ID = p.documentId,
+                                             Patient_ID = p.patientID
+                                         }).ToList<MergedEpisodeData>();
+
+                }
+            }
+
+            if (mergedEpisodeData.Any())
+            {
+                Console.WriteLine($"\tActive inpatient episodes found for patient ID: {patientId}\n");
+
+                foreach (MergedEpisodeData item in mergedEpisodeData)
+                {
+                    Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"\tNo active inpatient episodes were found patient ID: {patientId}\n");
+            }
+
+        }
     }
 
 }

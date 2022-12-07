@@ -32,6 +32,9 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationIcon>Advanced_Icon.ico</ApplicationIcon>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.Bcl.AsyncInterfaces, Version=5.0.0.0, Culture=neutral, PublicKeyToken=cc7b13ffcd2ddd51, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.5.0.0\lib\net461\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
@@ -83,6 +86,7 @@
     <Compile Include="Data\InpatientEpisode.cs" />
     <Compile Include="Data\MergedEpisodeData.cs" />
     <Compile Include="Data\ParentDocument.cs" />
+    <Compile Include="Data\PicklistValues.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Helpers\ProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -91,6 +95,8 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Content Include="Advanced_Icon.ico" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -8,9 +8,13 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security;
+using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder
 {
+
+
+
     public static class APIClient
     {
         static string _apiSessionToken = string.Empty;
@@ -235,7 +239,7 @@ namespace CarenotesParentDocumentFinder
 
             int currentPageNumber = 1;
 
-            RestRequest request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID=1&ReferralStatusId=1&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+            RestRequest request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Community}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
@@ -260,7 +264,7 @@ namespace CarenotesParentDocumentFinder
 
                             pageSize = 1;
 
-                            request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID=1&ReferralStatusId=1&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+                            request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Community}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
 
                             response = apiClient.ExecuteGet(request);
 
@@ -329,17 +333,14 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static List<InpatientEpisode> GetInpatientEpisodes(RestClient apiClient, int patientId, int pageSize)
+        public static List<InpatientEpisode> GetInpatientEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
         {
-            int episodeTypeId = 1;
-
-            int referralStatusId = 1;
 
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
             int currentPageNumber = 1;
 
-            RestRequest request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={episodeTypeId}&ReferralStatusId={referralStatusId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+            RestRequest request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Inpatient}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
@@ -363,7 +364,7 @@ namespace CarenotesParentDocumentFinder
 
                             pageSize = 1;
 
-                            request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={episodeTypeId}&ReferralStatusId={referralStatusId}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+                            request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Inpatient}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
 
                             response = apiClient.ExecuteGet(request);
 
@@ -400,9 +401,9 @@ namespace CarenotesParentDocumentFinder
 
             var output = JsonConvert.DeserializeObject<object>(json.ToString());
 
-            int communityEpisodeCount = -1;
+            int inpatientEpisodeCount = -1;
 
-            communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
+            inpatientEpisodeCount = json.SelectToken("inpatientEpisodeDetails").Count();
 
             JToken nx;
 
@@ -411,21 +412,21 @@ namespace CarenotesParentDocumentFinder
             if (nx != null)
                 _totalPages = (int)json.SelectToken("pageDetails.totalPages");
 
-            for (int i = 0; i < communityEpisodeCount; i++)
+            for (int i = 0; i < inpatientEpisodeCount; i++)
             {
                 inpatientEpisodes.Add(new InpatientEpisode()
                 {
-                    //episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
+                    episodeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeID"),
 
-                    //episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
+                    episodeTypeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeTypeID"),
 
-                    //locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
+                    locationID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationID"),
 
-                    //referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
+                    referralStatusID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].referralStatusID"),
 
-                    //serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
+                    serviceID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].serviceID"),
 
-                    //locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
+                    locationDesc = (string)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationDesc")
 
                 });
             }
