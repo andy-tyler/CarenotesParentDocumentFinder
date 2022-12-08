@@ -1,12 +1,15 @@
 ﻿using CarenotesParentDocumentFinder.Data;
 using CarenotesParentDocumentFinder.Helpers;
+using CsvHelper;
 using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Threading;
 using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
@@ -219,7 +222,9 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
 
-            WriteResults();
+            DisplayResults();
+
+            WriteResultsToFile();
 
         }
 
@@ -382,7 +387,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        static void WriteResults()
+        static void DisplayResults()
         {
 
             if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
@@ -412,6 +417,20 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine($"\n{identifiers.Count} patients processed, {masterEpisodeList.Count} documents found.");
 
         }
+    
+        static void WriteResultsToFile()
+        {
+            string filestringtime = DateTime.Now.Ticks.ToString();
+
+            using (var writer = new StreamWriter("C:\\drops\\parent-identifiers-" + filestringtime + ".csv"))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                csv.WriteRecords(masterEpisodeList);
+            }
+
+            Console.WriteLine($"Parent document identifiers written to: parent-identifiers-{filestringtime}.csv");
+        }
+        
     }
 
 }
