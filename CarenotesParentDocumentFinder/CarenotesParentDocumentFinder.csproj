@@ -83,6 +83,7 @@
   <ItemGroup>
     <Compile Include="APIClient.cs" />
     <Compile Include="Data\CommunityEpisode.cs" />
+    <Compile Include="Data\Episode.cs" />
     <Compile Include="Data\InpatientEpisode.cs" />
     <Compile Include="Data\MergedEpisodeData.cs" />
     <Compile Include="Data\ParentDocument.cs" />

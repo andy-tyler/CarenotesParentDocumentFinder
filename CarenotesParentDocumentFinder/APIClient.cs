@@ -127,8 +127,8 @@ namespace CarenotesParentDocumentFinder
                 request.AddHeader("X-Session-Id", _apiSessionToken);
 
 
-                using (var progress = new ProgressBar())
-                {
+                //using (var progress = new ProgressBar())
+                //{
 
                     var response = apiClient.ExecuteGet(request);
 
@@ -141,7 +141,7 @@ namespace CarenotesParentDocumentFinder
                         {
                             currentPageNumber++;
 
-                            progress.Report((double)currentPageNumber / _totalPages);
+                            //progress.Report((double)currentPageNumber / _totalPages);
 
                             while (currentPageNumber <= _totalPages)
                             {
@@ -163,7 +163,7 @@ namespace CarenotesParentDocumentFinder
 
                         }
 
-                        progress.Report((double)currentPageNumber / _totalPages);
+                        //progress.Report((double)currentPageNumber / _totalPages);
 
                         return parentDocuments;
                     }
@@ -171,7 +171,7 @@ namespace CarenotesParentDocumentFinder
                     {
                         throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
                     }
-                }
+                //}
 
             }
             catch (Exception ex)
@@ -242,8 +242,8 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
-            using (var progress = new ProgressBar())
-            {
+            //using (var progress = new ProgressBar())
+            //{
 
                 var response = apiClient.ExecuteGet(request);
 
@@ -256,7 +256,7 @@ namespace CarenotesParentDocumentFinder
                     {
                         currentPageNumber++;
 
-                        progress.Report((double)currentPageNumber / _totalPages);
+                        //progress.Report((double)currentPageNumber / _totalPages);
 
                         while (currentPageNumber <= _totalPages)
                         {
@@ -278,7 +278,7 @@ namespace CarenotesParentDocumentFinder
 
                     }
 
-                    progress.Report((double)currentPageNumber / _totalPages);
+                    //progress.Report((double)currentPageNumber / _totalPages);
 
                     return communityEpisodes;
                 }
@@ -286,7 +286,7 @@ namespace CarenotesParentDocumentFinder
                 {
                     throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
                 }
-            }
+            //}
         }
 
         public static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent, int patientId)
@@ -343,8 +343,8 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
-            using (var progress = new ProgressBar())
-            {
+            //using (var progress = new ProgressBar())
+            //{
 
                 var response = apiClient.ExecuteGet(request);
 
@@ -356,7 +356,7 @@ namespace CarenotesParentDocumentFinder
                     {
                         currentPageNumber++;
 
-                        progress.Report((double)currentPageNumber / _totalPages);
+                        //progress.Report((double)currentPageNumber / _totalPages);
 
                         while (currentPageNumber <= _totalPages)
                         {
@@ -378,7 +378,7 @@ namespace CarenotesParentDocumentFinder
 
                     }
 
-                    progress.Report((double)currentPageNumber / _totalPages);
+                    //progress.Report((double)currentPageNumber / _totalPages);
 
                     return inpatientEpisodes;
                 }
@@ -386,7 +386,7 @@ namespace CarenotesParentDocumentFinder
                 {
                     throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
                 }
-            }
+            //}
 
 
         }

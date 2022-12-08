@@ -10,10 +10,11 @@ namespace CarenotesParentDocumentFinder.Data
     {
         public int Patient_ID { get; set; }
         public int Contextual_ID { get; set; }
-        public int Community_Episode_ID { get; set; }
-        public int Community_Episode_Location_ID { get; set; }
-        public string Community_Episode_Location_Description { get; set; }
+        public int Episode_ID { get; set; }
+        public int Episode_Location_ID { get; set; }
+        public string Episode_Location_Description { get; set; }
         public int Parent_CN_Doc_ID { get; set; }
+        public int Service_ID { get; set; }
 
     }
 }

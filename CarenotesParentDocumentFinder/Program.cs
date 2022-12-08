@@ -1,10 +1,14 @@
 ﻿using CarenotesParentDocumentFinder.Data;
+using CarenotesParentDocumentFinder.Helpers;
 using RestSharp;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Threading;
+using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder
 {
@@ -19,6 +23,8 @@ namespace CarenotesParentDocumentFinder
         static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
         static int _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
+
+        static List<Episode> masterEpisodeList = new List<Episode>();
 
         static void Main(string[] args)
         {
@@ -154,35 +160,64 @@ namespace CarenotesParentDocumentFinder
         static void ProcessPatientIDFile()
         {
 
+            Stopwatch processStopWatch = new Stopwatch();
+
             Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
 
             APIClient.GetSessionToken(_apiClient);
 
+            processStopWatch.Start();
+            
             // 1. Get patient ID's from customer supplied CSV file.
 
             List<int> patientIdentifiers = GetPatientIdentifiersFromFile();
 
             // 2. Retrieve parent documents for each patient ID and load into a list.
-            
-            if (_outputFormat == (int)PicklistValues.OutputMethod.Tabbed)
-            {
-                Console.WriteLine($"Episode Type\t\tPatient ID\tEpisode ID\tLocation ID\tLocation description\t\tCN Doc ID");
-            }
 
-            foreach (int identifier in patientIdentifiers)
-            {
-                List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
+            Console.WriteLine("Requesting data from Carenotes...");
 
-                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+            using (var progress = new ProgressBar())
+            {
+
+                int counterPosition = 0;
+
+                foreach (int identifier in patientIdentifiers)
                 {
-                    Console.WriteLine($"\nRequesting parent documents for patient ID: {identifier}\n");
+
+                    progress.Report((double)counterPosition / patientIdentifiers.Count);
+
+                    List<ParentDocument> parentDocuments = GetParentDocuments(identifier);
+
+                    if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                    {
+                        Console.WriteLine($"\nRequesting parent documents for patient ID: {identifier}\n");
+                    }
+
+                    ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
+
+                    ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
+
+                    counterPosition++;
+
+
                 }
-
-                ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
-
-                ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
-
             }
+
+            Console.SetCursorPosition(0, Console.CursorTop - 1);
+
+            Console.Write(new string(' ', Console.WindowWidth));
+
+            Console.SetCursorPosition(0, Console.CursorTop - 1);
+
+            Console.WriteLine("Download complete.");
+            
+            processStopWatch.Stop();
+
+            TimeSpan ts = processStopWatch.Elapsed;
+
+            Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
+
+            WriteResults();
 
         }
 
@@ -236,11 +271,12 @@ namespace CarenotesParentDocumentFinder
                                          select new MergedEpisodeData
                                          {
                                              Contextual_ID = p.contextualId,
-                                             Community_Episode_ID = c.episodeID,
-                                             Community_Episode_Location_ID = c.locationID,
-                                             Community_Episode_Location_Description = c.locationDesc,
+                                             Episode_ID = c.episodeID,
+                                             Episode_Location_ID = c.locationID,
+                                             Episode_Location_Description = c.locationDesc,
                                              Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID
+                                             Patient_ID = p.patientID,
+                                             Service_ID = c.serviceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -249,22 +285,22 @@ namespace CarenotesParentDocumentFinder
             if (mergedEpisodeData.Any())
             {
 
-                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                foreach(MergedEpisodeData episode in mergedEpisodeData)
                 {
-                    Console.WriteLine($"\tActive community episodes found for patient ID: {patientId}\n");
+                    masterEpisodeList.Add(
+                        new Episode 
+                        {
+                            episodeID = episode.Episode_ID, 
+                            episodeTypeID = (int)PicklistValues.EpisodeType.Community, 
+                            locationDesc = episode.Episode_Location_Description, 
+                            locationID = episode.Episode_Location_ID, 
+                            referralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                            serviceID = episode.Service_ID,
+                            cnDocID = episode.Parent_CN_Doc_ID,
+                            patientID = episode.Patient_ID
+                        });
+                }
 
-                    foreach (MergedEpisodeData item in mergedEpisodeData)
-                    {
-                        Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
-                    }
-                }
-                else
-                {
-                    foreach (MergedEpisodeData item in mergedEpisodeData)
-                    {
-                        Console.WriteLine($"Community Episode\t{item.Patient_ID}\t\t{item.Community_Episode_ID}\t\t{item.Community_Episode_Location_ID}\t\t{item.Community_Episode_Location_Description}\t\t\t{item.Parent_CN_Doc_ID}");
-                    }
-                }
 
             }
             else
@@ -303,9 +339,9 @@ namespace CarenotesParentDocumentFinder
                                          select new MergedEpisodeData
                                          {
                                              Contextual_ID = p.contextualId,
-                                             Community_Episode_ID = c.episodeID,
-                                             Community_Episode_Location_ID = c.locationID,
-                                             Community_Episode_Location_Description = c.locationDesc,
+                                             Episode_ID = c.episodeID,
+                                             Episode_Location_ID = c.locationID,
+                                             Episode_Location_Description = c.locationDesc,
                                              Parent_CN_Doc_ID = p.documentId,
                                              Patient_ID = p.patientID
                                          }).ToList<MergedEpisodeData>();
@@ -316,22 +352,22 @@ namespace CarenotesParentDocumentFinder
             if (mergedEpisodeData.Any())
             {
 
-                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                foreach (MergedEpisodeData episode in mergedEpisodeData)
                 {
-                    Console.WriteLine($"\tActive inpatient episodes found for patient ID: {patientId}\n");
+                    masterEpisodeList.Add(
+                        new Episode
+                        {
+                            episodeID = episode.Episode_ID,
+                            episodeTypeID = (int)PicklistValues.EpisodeType.Inpatient,
+                            locationDesc = episode.Episode_Location_Description,
+                            locationID = episode.Episode_Location_ID,
+                            referralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                            serviceID = episode.Service_ID,
+                            cnDocID = episode.Parent_CN_Doc_ID,
+                            patientID = episode.Patient_ID
+                        });
+                }
 
-                    foreach (MergedEpisodeData item in mergedEpisodeData)
-                    {
-                        Console.WriteLine($"\tPatient ID: {item.Patient_ID}\n\tEpisode ID: {item.Community_Episode_ID}\n\tLocation ID: {item.Community_Episode_Location_ID}\n\tLocation description: {item.Community_Episode_Location_Description}\n\tParent CN Doc ID to use for child documents of this episode: {item.Parent_CN_Doc_ID}\n");
-                    }
-                }
-                else
-                {
-                    foreach (MergedEpisodeData item in mergedEpisodeData)
-                    {
-                        Console.WriteLine($"Inpatient episode\t{item.Patient_ID}\t\t{item.Community_Episode_ID}\t\t{item.Community_Episode_Location_ID}\t\t{item.Community_Episode_Location_Description}\t\t\t{item.Parent_CN_Doc_ID}");
-                    }
-                }
 
             }
             else
@@ -339,6 +375,34 @@ namespace CarenotesParentDocumentFinder
                 if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
                 {
                     Console.WriteLine($"\tNo active inpatient episodes were found patient ID: {patientId}\n");
+                }
+            }
+
+        }
+
+        static void WriteResults()
+        {
+
+            if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+            {
+
+                foreach (Episode episode in masterEpisodeList)
+                {
+                    Console.WriteLine($"Patient ID: {episode.patientID}");
+                    Console.WriteLine($"Episode Type: {(EpisodeType)episode.episodeTypeID}");
+                    Console.WriteLine($"Episode ID: {episode.episodeID}");
+                    Console.WriteLine($"Location ID: {episode.locationID}\n\t");
+                    Console.WriteLine($"Location description: {episode.locationDesc}");
+                    Console.WriteLine($"Parent CN Doc ID to use for child documents of this episode: {episode.cnDocID}\n");
+                }
+            }
+            else
+            {
+                Console.WriteLine($"\nEpisode Type\t\tPatient ID\tEpisode ID\tLocation ID\tLocation description\t\tCN Doc ID");
+
+                foreach (Episode episode in masterEpisodeList)
+                {
+                    Console.WriteLine($"{(EpisodeType)episode.episodeTypeID}\t\t{episode.patientID}\t\t{episode.episodeID}\t\t{episode.locationID}\t\t{episode.locationDesc}\t\t\t{episode.cnDocID}");
                 }
             }
 
