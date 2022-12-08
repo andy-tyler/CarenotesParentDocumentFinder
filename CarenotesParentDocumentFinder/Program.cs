@@ -36,7 +36,7 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("******************************************************");
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
-
+            
             if (APIClient.apiIsAvailable(_apiClient))
             {
                 try
@@ -69,13 +69,8 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        /// <summary>
-        /// Processes startup parameters passed in at point of execution.
         /// Example: /notes -f "c:\drops\randompatientsample.csv"
-        /// </summary>
-        /// <param name="startupArgs"></param>
-        /// <exception cref="FileNotFoundException"></exception>
-        /// <exception cref="ArgumentException"></exception>
+
         static void ProcessStartupParameters(string[] startupArgs)
         {
             if (startupArgs.Length == 0)
@@ -172,15 +167,35 @@ namespace CarenotesParentDocumentFinder
             APIClient.GetSessionToken(_apiClient);
 
             processStopWatch.Start();
-            
-            // 1. Get patient ID's from customer supplied CSV file.
 
             List<int> patientIdentifiers = GetPatientIdentifiersFromFile();
 
-            // 2. Retrieve parent documents for each patient ID and load into a list.
-
             Console.WriteLine("Requesting data from Carenotes...");
 
+            ProcessParentDocuments(patientIdentifiers);
+
+            Console.SetCursorPosition(0, Console.CursorTop - 1);
+
+            Console.Write(new string(' ', Console.WindowWidth));
+
+            Console.SetCursorPosition(0, Console.CursorTop - 1);
+
+            Console.WriteLine("Download complete.");
+
+            processStopWatch.Stop();
+
+            TimeSpan ts = processStopWatch.Elapsed;
+
+            Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
+
+            DisplayResults();
+
+            WriteResultsToFile();
+
+        }
+
+        private static void ProcessParentDocuments(List<int> patientIdentifiers)
+        {
             using (var progress = new ProgressBar())
             {
 
@@ -207,25 +222,6 @@ namespace CarenotesParentDocumentFinder
 
                 }
             }
-
-            Console.SetCursorPosition(0, Console.CursorTop - 1);
-
-            Console.Write(new string(' ', Console.WindowWidth));
-
-            Console.SetCursorPosition(0, Console.CursorTop - 1);
-
-            Console.WriteLine("Download complete.");
-            
-            processStopWatch.Stop();
-
-            TimeSpan ts = processStopWatch.Elapsed;
-
-            Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
-
-            DisplayResults();
-
-            WriteResultsToFile();
-
         }
 
         static List<int> GetPatientIdentifiersFromFile()
@@ -350,7 +346,8 @@ namespace CarenotesParentDocumentFinder
                                              Episode_Location_ID = c.locationID,
                                              Episode_Location_Description = c.locationDesc,
                                              Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID
+                                             Patient_ID = p.patientID,
+                                             Service_ID = c.serviceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
