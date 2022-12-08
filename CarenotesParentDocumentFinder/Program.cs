@@ -26,6 +26,8 @@ namespace CarenotesParentDocumentFinder
 
         static List<Episode> masterEpisodeList = new List<Episode>();
 
+        static List<int> identifiers;
+
         static void Main(string[] args)
         {
             Console.WriteLine("******************************************************");
@@ -227,7 +229,7 @@ namespace CarenotesParentDocumentFinder
             {
                 string contents = File.ReadAllText(_patientIDFilePath);
 
-                List<int> identifiers = contents.Split(',').Select(int.Parse).ToList();
+                identifiers = contents.Split(',').Select(int.Parse).ToList();
 
                 return identifiers;
             }
@@ -398,13 +400,16 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
-                Console.WriteLine($"\nEpisode Type\t\tPatient ID\tEpisode ID\tLocation ID\tLocation description\t\tCN Doc ID");
+                Console.WriteLine($"\nEpisode Type\t\tPatient ID\tEpisode ID\tLocation ID\tLocation description\t\t\tCN Doc ID");
 
                 foreach (Episode episode in masterEpisodeList)
                 {
-                    Console.WriteLine($"{(EpisodeType)episode.episodeTypeID}\t\t{episode.patientID}\t\t{episode.episodeID}\t\t{episode.locationID}\t\t{episode.locationDesc}\t\t\t{episode.cnDocID}");
+                    //Console.WriteLine($"{(EpisodeType)episode.episodeTypeID}\t\t{episode.patientID}\t\t{episode.episodeID}\t\t{episode.locationID}\t\t{episode.locationDesc}\t\t{episode.cnDocID}");
+                    Console.WriteLine("{0,-24}{1,-16}{2,-16}{3,-16}{4,-40}{5,-5}", (EpisodeType)episode.episodeTypeID, episode.patientID, episode.episodeID, episode.locationID, episode.locationDesc, episode.cnDocID);
                 }
             }
+
+            Console.WriteLine($"\n{identifiers.Count} patients processed, {masterEpisodeList.Count} documents found.");
 
         }
     }
