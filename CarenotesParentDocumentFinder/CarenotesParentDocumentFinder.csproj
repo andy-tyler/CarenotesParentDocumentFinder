@@ -88,12 +88,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="APIClient.cs" />
+    <Compile Include="Common.cs" />
     <Compile Include="Data\CommunityEpisode.cs" />
     <Compile Include="Data\Episode.cs" />
     <Compile Include="Data\InpatientEpisode.cs" />
     <Compile Include="Data\MergedEpisodeData.cs" />
     <Compile Include="Data\ParentDocument.cs" />
     <Compile Include="Data\PicklistValues.cs" />
+    <Compile Include="EpisodeDocumentProcessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Helpers\ProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
