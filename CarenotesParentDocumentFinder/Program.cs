@@ -147,6 +147,53 @@ namespace CarenotesParentDocumentFinder
 
                         break;
                     }
+                case "/attachments":
+                    {
+
+                        if (!int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out _objectTypeID))
+                            throw new ArgumentException("Attachments object type ID is missing or invalid. Check the AttachmentsObjectTypeID setting in the configuration file.");
+
+                        if (startupArgs[1] == "-f")
+                        {
+                            if (!String.IsNullOrEmpty(startupArgs[2]))
+                            {
+                                _patientIDFilePath = startupArgs[2];
+
+                                if (!string.IsNullOrEmpty(_patientIDFilePath))
+                                {
+                                    Console.WriteLine("Retrieving parent document data for the UDF attachment form.");
+
+                                    ProcessPatientIDFile();
+                                }
+                                else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+
+                                break;
+                            }
+                            else
+                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                        }
+                        if (startupArgs[3] == "-f")
+                        {
+                            if (!String.IsNullOrEmpty(startupArgs[4]))
+                            {
+                                _patientIDFilePath = startupArgs[4];
+
+                                if (!string.IsNullOrEmpty(_patientIDFilePath))
+                                {
+                                    ProcessPatientIDFile();
+                                }
+                                else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+
+                                break;
+                            }
+                            else
+                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                        }
+
+
+
+                        break;
+                    }
                 default:
                     {
                         throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
@@ -172,7 +219,7 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine("Requesting data from Carenotes...");
 
-            ProcessParentDocuments(patientIdentifiers);
+            ProcessParentDocumentEpisodes(patientIdentifiers);
 
             Console.SetCursorPosition(0, Console.CursorTop - 1);
 
@@ -188,13 +235,38 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
 
-            DisplayResults();
+            DisplayEpisodeResults();
 
-            WriteResultsToFile();
+            WriteEpisodeResultsToFile();
 
         }
 
-        private static void ProcessParentDocuments(List<int> patientIdentifiers)
+        static List<int> GetPatientIdentifiersFromFile()
+        {
+            if (_patientIDFilePath != null)
+            {
+                string contents = File.ReadAllText(_patientIDFilePath);
+
+                identifiers = contents.Split(',').Select(int.Parse).ToList();
+
+                return identifiers;
+            }
+            else
+            {
+                throw new ArgumentNullException("File path for patient identifier CSV is null or missing.");
+            }
+        }
+
+        static List<ParentDocument> GetParentDocuments(int patientID)
+        {
+
+            List<ParentDocument> parentDocuments = APIClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize);
+
+            return parentDocuments;
+
+        }
+
+        private static void ProcessParentDocumentEpisodes(List<int> patientIdentifiers)
         {
             using (var progress = new ProgressBar())
             {
@@ -222,31 +294,6 @@ namespace CarenotesParentDocumentFinder
 
                 }
             }
-        }
-
-        static List<int> GetPatientIdentifiersFromFile()
-        {
-            if (_patientIDFilePath != null)
-            {
-                string contents = File.ReadAllText(_patientIDFilePath);
-
-                identifiers = contents.Split(',').Select(int.Parse).ToList();
-
-                return identifiers;
-            }
-            else
-            {
-                throw new ArgumentNullException("File path for patient identifier CSV is null or missing.");
-            }
-        }
-
-        static List<ParentDocument> GetParentDocuments(int patientID)
-        {
-
-            List<ParentDocument> parentDocuments = APIClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize);
-
-            return parentDocuments;
-
         }
 
         static void ListCommunityEpisodeParentDocuments(List<ParentDocument> parentDocuments, int patientId)
@@ -384,7 +431,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        static void DisplayResults()
+        static void DisplayEpisodeResults()
         {
 
             if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
@@ -415,7 +462,7 @@ namespace CarenotesParentDocumentFinder
 
         }
     
-        static void WriteResultsToFile()
+        static void WriteEpisodeResultsToFile()
         {
             string filestringtime = DateTime.Now.Ticks.ToString();
 
