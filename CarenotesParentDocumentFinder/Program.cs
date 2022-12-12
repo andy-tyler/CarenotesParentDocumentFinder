@@ -1,6 +1,5 @@
 ﻿using CarenotesParentDocumentFinder.Data;
 using CarenotesParentDocumentFinder.DocumentProcessors;
-using CsvHelper.Configuration.Attributes;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -16,7 +15,7 @@ namespace CarenotesParentDocumentFinder
 
         static int _pageSize = 100;
 
-        static int _objectTypeID = 50;
+        static int _objectTypeID = -1;
 
         static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
@@ -87,13 +86,9 @@ namespace CarenotesParentDocumentFinder
                     break;
             }
 
+            if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize)) _pageSize = 100;
 
-            if (_patientIDFilePath == String.Empty)
-                _patientIDFilePath = ConfigurationManager.AppSettings["PatientIDFilePath"].ToString();
-
-            if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize))
-                _pageSize = 100;
-
+            SetCSVFilePath(startupArgs);
             
             switch (startupArgs[0])
             {
@@ -103,23 +98,12 @@ namespace CarenotesParentDocumentFinder
                     }
                 case "/notes":
                     {
-                        if (startupArgs[1] == "-f")
-                        {
-                            if (!String.IsNullOrEmpty(startupArgs[2]))
-                                _patientIDFilePath = startupArgs[2];
-                            else
-                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
-                        }
-                        else if (startupArgs[3] == "-f")
-                        {
-                            if (!String.IsNullOrEmpty(startupArgs[4]))
-                                _patientIDFilePath = startupArgs[4];
-                            else
-                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
-                        }
 
                         if (!string.IsNullOrEmpty(_patientIDFilePath))
                         {
+
+                            _objectTypeID = 50;
+
                             _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
 
                             ProcessPatientIDFile();
@@ -131,47 +115,24 @@ namespace CarenotesParentDocumentFinder
                 case "/attachments":
                     {
 
-                        if (!int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out _objectTypeID))
-                            throw new ArgumentException("Attachments object type ID is missing or invalid. Check the AttachmentsObjectTypeID setting in the configuration file.");
-
-                        if (startupArgs[1] == "-f")
+                        if (!string.IsNullOrEmpty(_patientIDFilePath))
                         {
-                            if (!String.IsNullOrEmpty(startupArgs[2]))
+                            int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out _objectTypeID);
+
+                            if (_objectTypeID != -1)
                             {
-                                _patientIDFilePath = startupArgs[2];
 
-                                if (!string.IsNullOrEmpty(_patientIDFilePath))
-                                {
-                                    Console.WriteLine("Retrieving parent document data for the UDF attachment form.");
+                                _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
 
-                                    ProcessPatientIDFile();
-                                }
-                                else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
-
-                                break;
+                                ProcessPatientIDFile();
                             }
-                            else
-                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
-                        }
-                        if (startupArgs[3] == "-f")
-                        {
-                            if (!String.IsNullOrEmpty(startupArgs[4]))
+                            else 
                             {
-                                _patientIDFilePath = startupArgs[4];
-
-                                if (!string.IsNullOrEmpty(_patientIDFilePath))
-                                {
-                                    ProcessPatientIDFile();
-                                }
-                                else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
-
-                                break;
+                                throw new ArgumentException("Attachment UDF object type ID missing or invalid. Check value specified in configuration file is specified and valid.");
                             }
-                            else
-                                throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                        
                         }
-
-
+                        else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
 
                         break;
                     }
@@ -200,10 +161,15 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine("Requesting data from Carenotes...");
 
-            using (EpisodeDocumentProcessor episodeProcessor = new EpisodeDocumentProcessor(_apiClient, _outputFormat, _pageSize, patientIdentifiers, _common))
+            if(_common.GetObjectTypeID() == 50)
             {
-                episodeProcessor.ProcessParentDocumentEpisodes(patientIdentifiers);
+                // Get available episode documents that can parent a clinical note document.
+                using (EpisodeDocumentProcessor episodeProcessor = new EpisodeDocumentProcessor(_apiClient, _outputFormat, _pageSize, patientIdentifiers, _common))
+                {
+                    episodeProcessor.ProcessParentDocumentEpisodes(patientIdentifiers);
+                }
             }
+
 
             Console.WriteLine("Download complete.");
 
@@ -213,11 +179,29 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
 
-
         }
 
+        static void SetCSVFilePath(string[] startupArgs)
+        {
+            if (_patientIDFilePath == String.Empty) _patientIDFilePath = ConfigurationManager.AppSettings["PatientIDFilePath"].ToString();
+
+            if (startupArgs[1] == "-f")
+            {
+                if (!String.IsNullOrEmpty(startupArgs[2]))
+                    _patientIDFilePath = startupArgs[2];
+                else
+                    throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+            }
+            else if (startupArgs[3] == "-f")
+            {
+                if (!String.IsNullOrEmpty(startupArgs[4]))
+                    _patientIDFilePath = startupArgs[4];
+                else
+                    throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+            }
 
 
+        }
 
     }
 

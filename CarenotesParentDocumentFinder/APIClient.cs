@@ -125,10 +125,6 @@ namespace CarenotesParentDocumentFinder
 
                 request.AddHeader("X-Session-Id", _apiSessionToken);
 
-
-                //using (var progress = new ProgressBar())
-                //{
-
                 var response = apiClient.ExecuteGet(request);
 
                 if (response.IsSuccessful)
@@ -139,8 +135,6 @@ namespace CarenotesParentDocumentFinder
                     if (_totalPages > 1)
                     {
                         currentPageNumber++;
-
-                        //progress.Report((double)currentPageNumber / _totalPages);
 
                         while (currentPageNumber <= _totalPages)
                         {
@@ -161,8 +155,6 @@ namespace CarenotesParentDocumentFinder
                         }
 
                     }
-
-                    //progress.Report((double)currentPageNumber / _totalPages);
 
                     return parentDocuments;
                 }
@@ -376,7 +368,6 @@ namespace CarenotesParentDocumentFinder
 
         private static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent, int patientId)
         {
-
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
             JObject json = JObject.Parse(responseContent);
@@ -402,7 +393,7 @@ namespace CarenotesParentDocumentFinder
 
                     episodeTypeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeTypeID"),
 
-                    locationID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationID"),
+                    locationID = (int?)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationID"),
 
                     referralStatusID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].referralStatusID"),
 
@@ -414,6 +405,7 @@ namespace CarenotesParentDocumentFinder
             }
 
             return inpatientEpisodes;
+
         }
 
     }
