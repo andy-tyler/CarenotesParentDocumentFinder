@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder.DocumentProcessors
@@ -34,29 +35,24 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         {
             using (var progress = new ProgressBar())
             {
-
                 int counterPosition = 0;
 
-                foreach (int identifier in patientIdentifiers)
-                {
+                var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
+                Parallel.ForEach(patientIdentifiers, parallelOptions, identifier =>
+                {
                     progress.Report((double)counterPosition / patientIdentifiers.Count);
 
                     List<ParentDocument> parentDocuments = _common.GetParentDocuments(identifier);
-
-                    if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
-                    {
-                        Console.WriteLine($"\nRequesting parent documents for patient ID: {identifier}\n");
-                    }
 
                     ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
 
                     ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
 
                     counterPosition++;
-
-
                 }
+                );
+
             }
 
             Console.SetCursorPosition(0, Console.CursorTop - 1);
@@ -81,6 +77,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
 
             List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+
+            var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
             foreach (int? episodeId in episodeIds)
             {
@@ -149,6 +147,33 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
             List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+
+            var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
+
+            Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
+            {
+                if (episodeId != null)
+                {
+
+                    inpatientEpisodes = APIClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
+
+                    mergedEpisodeData = (from c in inpatientEpisodes
+                                         join p in parentDocuments
+                                         on c.episodeID equals p.contextualId
+                                         select new MergedEpisodeData
+                                         {
+                                             Contextual_ID = p.contextualId,
+                                             Episode_ID = c.episodeID,
+                                             Episode_Location_ID = c.locationID,
+                                             Episode_Location_Description = c.locationDesc,
+                                             Parent_CN_Doc_ID = p.documentId,
+                                             Patient_ID = p.patientID,
+                                             Service_ID = c.serviceID
+                                         }).ToList<MergedEpisodeData>();
+
+                }
+
+            });
 
             foreach (int? episodeId in episodeIds)
             {
@@ -263,13 +288,6 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 disposedValue = true;
             }
         }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~EpisodeDocumentProcessor()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
 
         public void Dispose()
         {
