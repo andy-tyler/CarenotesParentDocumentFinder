@@ -29,7 +29,7 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("******************************************************");
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
-            
+
             if (APIClient.apiIsAvailable(_apiClient))
             {
                 try
@@ -75,7 +75,7 @@ namespace CarenotesParentDocumentFinder
                 throw new ArgumentException("No switch has been specified to set the child document type. Re-run with /? for available options.");
             }
 
-            switch(ConfigurationManager.AppSettings["OutputFormat"])
+            switch (ConfigurationManager.AppSettings["OutputFormat"])
             {
                 case "Verbose":
                     _outputFormat = (int)PicklistValues.OutputMethod.Verbose;
@@ -89,7 +89,7 @@ namespace CarenotesParentDocumentFinder
             if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize)) _pageSize = 100;
 
             SetCSVFilePath(startupArgs);
-            
+
             switch (startupArgs[0])
             {
                 case "/?":
@@ -126,11 +126,11 @@ namespace CarenotesParentDocumentFinder
 
                                 ProcessPatientIDFile();
                             }
-                            else 
+                            else
                             {
                                 throw new ArgumentException("Attachment UDF object type ID missing or invalid. Check value specified in configuration file is specified and valid.");
                             }
-                        
+
                         }
                         else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
 
@@ -161,7 +161,7 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine("Requesting data from Carenotes...");
 
-            if(_common.GetObjectTypeID() == 50)
+            if (_common.GetObjectTypeID() == 50)
             {
                 // Get available episode documents that can parent a clinical note document.
                 using (EpisodeDocumentProcessor episodeProcessor = new EpisodeDocumentProcessor(_apiClient, _outputFormat, _pageSize, patientIdentifiers, _common))
@@ -185,19 +185,23 @@ namespace CarenotesParentDocumentFinder
         {
             if (_patientIDFilePath == String.Empty) _patientIDFilePath = ConfigurationManager.AppSettings["PatientIDFilePath"].ToString();
 
-            if (startupArgs[1] == "-f")
+            int fileFlagSet = Array.IndexOf(startupArgs,"-f");
+
+            if (fileFlagSet != -1)
             {
-                if (!String.IsNullOrEmpty(startupArgs[2]))
-                    _patientIDFilePath = startupArgs[2];
-                else
+
+                if (!String.IsNullOrEmpty(startupArgs[fileFlagSet]))
+                    _patientIDFilePath = startupArgs[fileFlagSet + 1];
+
+                if (String.IsNullOrEmpty(_patientIDFilePath))
+                {
                     throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+
+                }
             }
-            else if (startupArgs[3] == "-f")
+            else
             {
-                if (!String.IsNullOrEmpty(startupArgs[4]))
-                    _patientIDFilePath = startupArgs[4];
-                else
-                    throw new ArgumentException("File path not specified or invalid. Check file path parameter (-f) is valid.");
+                throw new ArgumentException("File path flag not set.");
             }
 
 
