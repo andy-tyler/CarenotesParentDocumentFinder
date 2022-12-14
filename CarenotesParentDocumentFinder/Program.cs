@@ -49,6 +49,10 @@ namespace CarenotesParentDocumentFinder
                 {
                     Console.WriteLine(ex.Message);
                 }
+                catch (FormatException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
                 catch (UnauthorizedAccessException ex)
                 {
                     Console.WriteLine(ex.Message);
@@ -92,58 +96,120 @@ namespace CarenotesParentDocumentFinder
 
             if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize)) _pageSize = 100;
 
-            SetCSVFilePath(startupArgs);
+            int recursiveSwitchIndex = Array.IndexOf(startupArgs,"-r");
 
-            switch (startupArgs[0])
+            if (recursiveSwitchIndex != -1)
             {
-                case "/?":
-                    {
-                        break;
-                    }
-                case "/notes":
-                    {
+                if (Directory.Exists(startupArgs[recursiveSwitchIndex + 1]))
+                {
+                    Console.WriteLine($"Processing all CSV files in directory {startupArgs[recursiveSwitchIndex + 1]}\n");
 
-                        if (!string.IsNullOrEmpty(_patientIDFilePath))
+                    string[] submissionFileCandidates = Directory.GetFiles(startupArgs[recursiveSwitchIndex + 1], "*.csv\n");
+
+
+                    Stopwatch processStopWatch = new Stopwatch();
+
+                    Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
+
+                    APIClient.GetSessionToken(_apiClient);
+
+                    processStopWatch.Start();
+
+                    Console.WriteLine($"{submissionFileCandidates.Length} files found for processing in {startupArgs[recursiveSwitchIndex + 1]}");
+
+                    foreach (string submissionFile in submissionFileCandidates)
+                    {
+                        Console.WriteLine($"\nProcessing file {submissionFile}");
+
+                        _objectTypeID = 50;
+
+                        using (Common cmn = new Common(submissionFile, _apiClient, _objectTypeID, _pageSize))
                         {
+                            List<int> patientIdentifiers = cmn.GetPatientIdentifiersFromFile();
 
-                            _objectTypeID = 50;
-
-                            _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
-
-                            ProcessPatientIDFile();
-                        }
-                        else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
-
-                        break;
-                    }
-                case "/attachments":
-                    {
-
-                        if (!string.IsNullOrEmpty(_patientIDFilePath))
-                        {
-                            int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out _objectTypeID);
-
-                            if (_objectTypeID != -1)
+                            if (cmn.GetObjectTypeID() == 50 && patientIdentifiers.Count > 0)
                             {
+                                // Get available episode documents that can parent a clinical note document.
+                                using (EpisodeDocumentProcessor episodeProcessor = new EpisodeDocumentProcessor(_apiClient, _outputFormat, _pageSize, patientIdentifiers, cmn))
+                                {
+                                    episodeProcessor.ProcessParentDocumentEpisodes(patientIdentifiers);
+                                }
+                            }
+                        }
+
+                    }
+
+                    processStopWatch.Stop();
+
+                    TimeSpan ts = processStopWatch.Elapsed;
+
+                    if (processStopWatch.Elapsed.TotalSeconds > 1)
+                        Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
+
+                }
+                else
+                {
+                    throw new DirectoryNotFoundException("Directory not found to process CSV files.");
+                }
+
+
+            }
+            else
+            {
+                SetCSVFilePath(startupArgs);
+
+                switch (startupArgs[0])
+                {
+                    case "/?":
+                        {
+                            break;
+                        }
+                    case "/notes":
+                        {
+
+                            if (!string.IsNullOrEmpty(_patientIDFilePath))
+                            {
+
+                                _objectTypeID = 50;
 
                                 _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
 
-                                ProcessPatientIDFile();
                             }
-                            else
-                            {
-                                throw new ArgumentException("Attachment UDF object type ID missing or invalid. Check value specified in configuration file is specified and valid.");
-                            }
+                            else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
 
+                            break;
                         }
-                        else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+                    case "/attachments":
+                        {
 
-                        break;
-                    }
-                default:
-                    {
-                        throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
-                    }
+                            if (!string.IsNullOrEmpty(_patientIDFilePath))
+                            {
+                                int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out _objectTypeID);
+
+                                if (_objectTypeID != -1)
+                                {
+
+                                    _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+
+                                }
+                                else
+                                {
+                                    throw new ArgumentException("Attachment UDF object type ID missing or invalid. Check value specified in configuration file is specified and valid.");
+                                }
+
+                            }
+                            else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+
+                            break;
+                        }
+                    default:
+                        {
+                            throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
+                        }
+
+                }
+
+                ProcessPatientIDFile();
             }
 
             Console.WriteLine("\nProcessing complete.");
@@ -204,7 +270,7 @@ namespace CarenotesParentDocumentFinder
                 }
             }
 
-            if(string.IsNullOrEmpty(_patientIDFilePath))
+            if (string.IsNullOrEmpty(_patientIDFilePath))
             {
                 throw new ArgumentException("File path flag not set.");
             }
@@ -212,21 +278,6 @@ namespace CarenotesParentDocumentFinder
             if (!File.Exists(_patientIDFilePath))
                 throw new FileNotFoundException("Specified CSV file does not exist or is incorrect.");
 
-            //FileAttributes fileAttributes = File.GetAttributes(_patientIDFilePath);
-
-            //switch(fileAttributes)
-            //{
-            //    case FileAttributes.Directory:
-            //        if(!Directory.Exists(_patientIDFilePath))
-            //        {
-            //            throw new FileNotFoundException("Invalid file path specifed.");
-            //        }
-            //        break;
-            //    default:
-            //        if (!File.Exists(_patientIDFilePath))
-            //            throw new FileNotFoundException("Invalid file path or filename specified.");
-            //        break;
-            //}
         }
 
     }
