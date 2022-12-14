@@ -104,7 +104,16 @@ namespace CarenotesParentDocumentFinder
                 {
                     Console.WriteLine($"Processing all CSV files in directory {startupArgs[recursiveSwitchIndex + 1]}\n");
 
-                    string[] submissionFileCandidates = Directory.GetFiles(startupArgs[recursiveSwitchIndex + 1], "*.csv\n");
+                    SearchOption searchOption = SearchOption.TopDirectoryOnly;
+
+                    bool recursiveSearchEnabled;
+                        
+                    Boolean.TryParse(ConfigurationManager.AppSettings["RecursiveSearch"], out recursiveSearchEnabled);
+
+                    if (recursiveSearchEnabled)
+                        searchOption = SearchOption.AllDirectories;
+
+                    string []submissionFileCandidates = Directory.GetFiles(startupArgs[recursiveSwitchIndex + 1], "*.csv", searchOption);
 
 
                     Stopwatch processStopWatch = new Stopwatch();
