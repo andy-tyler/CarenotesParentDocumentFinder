@@ -45,10 +45,14 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     List<ParentDocument> parentDocuments = _common.GetParentDocuments(identifier);
 
-                    ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
+                    if (parentDocuments != null || parentDocuments.Count > 0)
+                    {
 
-                    ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
+                        ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
 
+                        ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
+
+                    }
                     counterPosition++;
                 }
                 );
@@ -227,7 +231,6 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                     Console.WriteLine($"\tNo active inpatient episodes were found patient ID: {patientId}\n");
                 }
             }
-
         }
 
         private void DisplayEpisodeResults()

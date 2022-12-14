@@ -37,6 +37,10 @@ namespace CarenotesParentDocumentFinder
                     ProcessStartupParameters(args);
 
                 }
+                catch (FileNotFoundException ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
                 catch (ArgumentException ex)
                 {
                     Console.WriteLine(ex.Message);
@@ -183,7 +187,7 @@ namespace CarenotesParentDocumentFinder
 
         static void SetCSVFilePath(string[] startupArgs)
         {
-            if (_patientIDFilePath == String.Empty) _patientIDFilePath = ConfigurationManager.AppSettings["PatientIDFilePath"].ToString();
+            _patientIDFilePath = ConfigurationManager.AppSettings["PatientIDFilePath"].ToString();
 
             int fileFlagSet = Array.IndexOf(startupArgs,"-f");
 
@@ -199,12 +203,30 @@ namespace CarenotesParentDocumentFinder
 
                 }
             }
-            else
+
+            if(string.IsNullOrEmpty(_patientIDFilePath))
             {
                 throw new ArgumentException("File path flag not set.");
             }
 
+            if (!File.Exists(_patientIDFilePath))
+                throw new FileNotFoundException("Specified CSV file does not exist or is incorrect.");
 
+            //FileAttributes fileAttributes = File.GetAttributes(_patientIDFilePath);
+
+            //switch(fileAttributes)
+            //{
+            //    case FileAttributes.Directory:
+            //        if(!Directory.Exists(_patientIDFilePath))
+            //        {
+            //            throw new FileNotFoundException("Invalid file path specifed.");
+            //        }
+            //        break;
+            //    default:
+            //        if (!File.Exists(_patientIDFilePath))
+            //            throw new FileNotFoundException("Invalid file path or filename specified.");
+            //        break;
+            //}
         }
 
     }

@@ -4,14 +4,8 @@ using CsvHelper.Configuration;
 using RestSharp;
 using System;
 using System.Collections.Generic;
-using System.Configuration;
-using System.Diagnostics;
 using System.Globalization;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder
 {
@@ -68,7 +62,9 @@ namespace CarenotesParentDocumentFinder
         public List<ParentDocument> GetParentDocuments(int patientID)
         {
 
-            List<ParentDocument> parentDocuments = APIClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize);
+            List<ParentDocument> parentDocuments = new List<ParentDocument>();
+
+            parentDocuments.AddRange(APIClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize));
 
             return parentDocuments;
 
