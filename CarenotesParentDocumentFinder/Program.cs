@@ -107,7 +107,7 @@ namespace CarenotesParentDocumentFinder
                     SearchOption searchOption = SearchOption.TopDirectoryOnly;
 
                     bool recursiveSearchEnabled;
-                        
+
                     Boolean.TryParse(ConfigurationManager.AppSettings["RecursiveSearch"], out recursiveSearchEnabled);
 
                     if (recursiveSearchEnabled)
