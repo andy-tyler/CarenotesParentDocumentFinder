@@ -9,13 +9,11 @@ using System.IO;
 
 namespace CarenotesParentDocumentFinder
 {
-    internal class Program
+    static internal class Program
     {
         static string _patientIDFilePath = string.Empty;
 
         static int _pageSize = 100;
-
-        static int _objectTypeID = -1;
 
         static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
@@ -84,7 +82,6 @@ namespace CarenotesParentDocumentFinder
                 case "Verbose":
                     _outputFormat = (int)PicklistValues.OutputMethod.Verbose;
                     break;
-                case "Tabbed":
                 default:
                     _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
                     break;
@@ -106,7 +103,7 @@ namespace CarenotesParentDocumentFinder
                         if (!string.IsNullOrEmpty(_patientIDFilePath))
                         {
 
-                            _objectTypeID = 50;
+                            int _objectTypeID = 50;
 
                             _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
 
@@ -118,6 +115,8 @@ namespace CarenotesParentDocumentFinder
                     }
                 case "/attachments":
                     {
+
+                        int _objectTypeID;
 
                         if (!string.IsNullOrEmpty(_patientIDFilePath))
                         {

@@ -14,21 +14,21 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 {
     public class EpisodeDocumentProcessor : IDisposable
     {
-        static int _outputFormat = 1;
-        static int _pageSize = 100;
-        static List<Episode> masterEpisodeList = new List<Episode>();
-        private static RestClient _apiClient;
-        static List<int> _identifiers;
+        readonly int _outputFormat = 1;
+        readonly int _pageSize = 100;
+        readonly List<Episode> masterEpisodeList = new List<Episode>();
+        private readonly RestClient _apiClient;
+        readonly List<int> _identifiers;
         private bool disposedValue;
-        private static Common _common;
+        readonly private Common _common;
 
         public EpisodeDocumentProcessor(RestClient restClient, int outputFormat, int pageSize, List<int> identifiers, Common common)
         {
-            _apiClient = restClient;
-            _outputFormat = outputFormat;
-            _pageSize = pageSize;
-            _identifiers = identifiers;
-            _common = common;
+            this._apiClient = restClient;
+            this._outputFormat = outputFormat;
+            this._pageSize = pageSize;
+            this._identifiers = identifiers;
+            this._common = common;
         }
 
         public void ProcessParentDocumentEpisodes(List<int> patientIdentifiers)
@@ -78,11 +78,9 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                               where ce.documentTypeID == 52
                               select ce.episodeId).Distinct().ToList();
 
-            List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
+            List<CommunityEpisode> communityEpisodes;
 
             List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
-
-            var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
             foreach (int? episodeId in episodeIds)
             {
@@ -255,7 +253,6 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                 foreach (Episode episode in masterEpisodeList)
                 {
-                    //Console.WriteLine($"{(EpisodeType)episode.episodeTypeID}\t\t{episode.patientID}\t\t{episode.episodeID}\t\t{episode.locationID}\t\t{episode.locationDesc}\t\t{episode.cnDocID}");
                     Console.WriteLine("{0,-24}{1,-16}{2,-16}{3,-16}{4,-40}{5,-5}", (EpisodeType)episode.episodeTypeID, episode.patientID, episode.episodeID, episode.locationID, episode.locationDesc, episode.cnDocID);
                 }
             }
@@ -281,13 +278,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         {
             if (!disposedValue)
             {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects)
-                }
 
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
                 disposedValue = true;
             }
         }
