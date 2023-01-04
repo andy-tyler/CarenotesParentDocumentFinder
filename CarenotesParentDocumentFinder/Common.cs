@@ -40,7 +40,6 @@ namespace CarenotesParentDocumentFinder
                 using (var reader = new StreamReader(_patientIDFilePath))
                 using (var csv = new CsvReader(reader, config))
                 {
-                    var records = new List<int>();
 
                     csv.Read();
                     

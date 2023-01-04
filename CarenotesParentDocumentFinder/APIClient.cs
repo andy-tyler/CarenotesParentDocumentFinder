@@ -177,8 +177,6 @@ namespace CarenotesParentDocumentFinder
 
             JObject json = JObject.Parse(responseContent);
 
-            var output = JsonConvert.DeserializeObject<object>(json.ToString());
-
             int parentDocumentsCount = -1;
 
             parentDocumentsCount = json.SelectToken("parentDocuments").Count();
@@ -268,8 +266,6 @@ namespace CarenotesParentDocumentFinder
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
 
             JObject json = JObject.Parse(responseContent);
-
-            var output = JsonConvert.DeserializeObject<object>(json.ToString());
 
             int communityEpisodeCount = -1;
 
@@ -361,8 +357,6 @@ namespace CarenotesParentDocumentFinder
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
             JObject json = JObject.Parse(responseContent);
-
-            var output = JsonConvert.DeserializeObject<object>(json.ToString());
 
             int inpatientEpisodeCount = -1;
 
