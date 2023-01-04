@@ -4,6 +4,7 @@ using CsvHelper;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -265,13 +266,15 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         {
             string filestringtime = DateTime.Now.Ticks.ToString();
 
-            using (var writer = new StreamWriter("C:\\drops\\parent-identifiers-" + filestringtime + ".csv"))
+            DirectoryInfo di = Directory.CreateDirectory(ConfigurationManager.AppSettings["ProcessingResultsPath"]);
+
+            using (var writer = new StreamWriter(di.FullName + "\\parent-identifiers-" + filestringtime + ".csv"))
             using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
             {
                 csv.WriteRecords(masterEpisodeList);
             }
 
-            Console.WriteLine($"Parent document identifiers written to: parent-identifiers-{filestringtime}.csv");
+            Console.WriteLine($"\nParent document identifiers written to: {0}\\parent-identifiers-{filestringtime}.csv", di.FullName);
         }
 
         protected virtual void Dispose(bool disposing)
