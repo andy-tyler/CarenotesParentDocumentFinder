@@ -45,7 +45,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     List<ParentDocument> parentDocuments = _common.GetParentDocuments(identifier);
 
-                    if (parentDocuments != null && parentDocuments.Count > 0)
+                    if (parentDocuments.Count > 0)
                     {
 
                         ListCommunityEpisodeParentDocuments(parentDocuments, identifier);

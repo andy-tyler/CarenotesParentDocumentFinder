@@ -99,7 +99,7 @@ namespace CarenotesParentDocumentFinder
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     throw new UnauthorizedAccessException("API credentials supplied are invalid.");
 
-                throw new Exception($"Unable to obtain session token from API: {response.ErrorMessage}");
+                throw new WebException($"Unable to obtain session token from API: {response.ErrorMessage}");
             }
         }
 
@@ -162,15 +162,14 @@ namespace CarenotesParentDocumentFinder
                 }
                 else
                 {
-                    throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                    throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
                 }
-                //}
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return null;
+                return new List<ParentDocument>();
             }
         }
 
@@ -240,7 +239,7 @@ namespace CarenotesParentDocumentFinder
 
             if (response.IsSuccessful)
             {
-                communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
+                communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
                 {
@@ -257,7 +256,7 @@ namespace CarenotesParentDocumentFinder
 
                         if (response.IsSuccessful)
                         {
-                            communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
+                            communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content));
                         }
 
                         currentPageNumber++;
@@ -270,11 +269,11 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
-                throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
         }
 
-        private static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent, int patientId)
+        private static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent)
         {
 
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
@@ -332,7 +331,7 @@ namespace CarenotesParentDocumentFinder
 
             if (response.IsSuccessful)
             {
-                inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content, patientId));
+                inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
                 {
@@ -349,7 +348,7 @@ namespace CarenotesParentDocumentFinder
 
                         if (response.IsSuccessful)
                         {
-                            inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content, patientId));
+                            inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content));
                         }
 
                         currentPageNumber++;
@@ -362,13 +361,13 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
-                throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
 
 
         }
 
-        private static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent, int patientId)
+        private static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent)
         {
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
