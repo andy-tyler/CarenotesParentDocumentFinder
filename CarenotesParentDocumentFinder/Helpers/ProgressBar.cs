@@ -21,6 +21,7 @@ namespace CarenotesParentDocumentFinder.Helpers
         private const string animation = @"|/-\";
 
         private readonly Timer timer;
+        private readonly object timerLock = new object();
 
         private double currentProgress = 0;
         private string currentText = string.Empty;
@@ -49,7 +50,7 @@ namespace CarenotesParentDocumentFinder.Helpers
 
         private void TimerHandler(object state)
         {
-            lock (timer)
+            lock (timerLock)
             {
                 if (disposed) return;
 
@@ -101,7 +102,13 @@ namespace CarenotesParentDocumentFinder.Helpers
 
         public void Dispose()
         {
-            lock (timer)
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        protected virtual void Dispose(bool disposing)
+        {
+            lock (timerLock)
             {
                 disposed = true;
                 UpdateText(string.Empty);

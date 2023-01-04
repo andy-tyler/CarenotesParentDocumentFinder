@@ -11,16 +11,9 @@ using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder
 {
-
-
-
-    public static class APIClient
+    public static class ApiClient
     {
-        static string _apiSessionToken = string.Empty;
-
-        static SecureString _securePassword;
-
-        static string _username = string.Empty;
+        static string _apiSessionToken;
 
         static int _totalPages = -1;
 
@@ -33,55 +26,61 @@ namespace CarenotesParentDocumentFinder
 
             string userName = Console.ReadLine();
 
-            Console.Write("Carenotes password: ");
-
-            SecureString password = new SecureString();
-
-
-            while (true)
-            {
-                ConsoleKeyInfo consoleKeyInfo;
-                do
-                {
-                    consoleKeyInfo = Console.ReadKey(true);
-                    if (consoleKeyInfo.Key != ConsoleKey.Enter)
-                    {
-                        if (consoleKeyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
-                        {
-                            Console.Write("\b \b");
-                            password.RemoveAt(password.Length - 1);
-                        }
-                    }
-                    else
-                        goto label_6;
-                }
-                while (char.IsControl(consoleKeyInfo.KeyChar));
-                Console.Write("*");
-                password.AppendChar(consoleKeyInfo.KeyChar);
-            }
-
-        label_6:
-            password.MakeReadOnly();
-
-            _username = userName;
-
-            _securePassword = password;
+            SecureString securePassword = GetPassword();
 
             Console.WriteLine();
 
-
-            NetworkCredential creds = new NetworkCredential(string.Empty, _securePassword);
-
             RestRequest request = new RestRequest("session.json", Method.Post);
 
-            request.AddParameter("UserName", _username);
+            request.AddParameter("UserName", userName);
 
-            request.AddParameter("Password", new NetworkCredential("", _securePassword).Password);
+            request.AddParameter("Password", new NetworkCredential("", securePassword).Password);
 
             var response = apiClient.ExecutePost(request);
 
             Console.WriteLine();
 
+            CheckResponseStatus(response);
+        }
+
+        private static SecureString GetPassword()
+        {
+            Console.Write("Carenotes password: ");
+
+            SecureString password = new SecureString();
+            ConsoleKeyInfo keyInfo;
+
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+                // Skip if Backspace or Enter is Pressed
+                if (keyInfo.Key != ConsoleKey.Backspace && keyInfo.Key != ConsoleKey.Enter)
+                {
+                    password.AppendChar(keyInfo.KeyChar);
+                    Console.Write("*");
+                }
+                else
+                {
+                    if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
+                    {
+                        // Remove last charcter if Backspace is Pressed
+                        Console.Write("\b \b");
+                        password.RemoveAt(password.Length - 1);
+                    }
+                }
+            }
+            // Stops Getting Password Once Enter is Pressed
+            while (keyInfo.Key != ConsoleKey.Enter);
+
+            password.MakeReadOnly();
+
+            SecureString securePassword = password;
+
+            return securePassword;
+        }
+
+        private static void CheckResponseStatus(RestResponse response)
+        {
             if (response.IsSuccessful)
             {
 
@@ -97,7 +96,7 @@ namespace CarenotesParentDocumentFinder
                 if (response.StatusCode == HttpStatusCode.Unauthorized)
                     throw new UnauthorizedAccessException("API credentials supplied are invalid.");
 
-                throw new Exception($"Unable to obtain session token from API: {response.ErrorMessage}");
+                throw new WebException($"Unable to obtain session token from API: {response.ErrorMessage}");
             }
         }
 
@@ -160,66 +159,57 @@ namespace CarenotesParentDocumentFinder
                 }
                 else
                 {
-                    throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                    throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
                 }
-                //}
 
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
-                return null;
+                return new List<ParentDocument>();
             }
         }
 
         private static List<ParentDocument> ParseParentDocumentJson(string responseContent, int patientId)
         {
-            try
+
+            List<ParentDocument> parentDocuments = new List<ParentDocument>();
+
+            JObject json = JObject.Parse(responseContent);
+
+            var output = JsonConvert.DeserializeObject<object>(json.ToString());
+
+            int parentDocumentsCount = -1;
+
+            parentDocumentsCount = json.SelectToken("parentDocuments").Count();
+
+            _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+            for (int i = 0; i < parentDocumentsCount; i++)
             {
-
-                List<ParentDocument> parentDocuments = new List<ParentDocument>();
-
-                JObject json = JObject.Parse(responseContent);
-
-                var output = JsonConvert.DeserializeObject<object>(json.ToString());
-
-                int parentDocumentsCount = -1;
-
-                parentDocumentsCount = json.SelectToken("parentDocuments").Count();
-
-                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-
-                for (int i = 0; i < parentDocumentsCount; i++)
+                parentDocuments.Add(new ParentDocument()
                 {
-                    parentDocuments.Add(new ParentDocument()
-                    {
-                        patientID = patientId,
+                    patientID = patientId,
 
-                        documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
+                    documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
 
-                        documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
+                    documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
 
-                        documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
+                    documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
 
-                        contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
+                    contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
 
-                        referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
+                    referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
 
-                        episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
+                    episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
 
-                        documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
+                    documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
 
-                        active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
-                    });
-                }
-
-                return parentDocuments;
+                    active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
+                });
             }
-            catch (Exception ex)
-            {
-                string n1 = ex.StackTrace;
-                throw;
-            }
+
+            return parentDocuments;
 
         }
 
@@ -238,7 +228,7 @@ namespace CarenotesParentDocumentFinder
 
             if (response.IsSuccessful)
             {
-                communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
+                communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
                 {
@@ -255,7 +245,7 @@ namespace CarenotesParentDocumentFinder
 
                         if (response.IsSuccessful)
                         {
-                            communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content, patientId));
+                            communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content));
                         }
 
                         currentPageNumber++;
@@ -268,11 +258,11 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
-                throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
         }
 
-        private static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent, int patientId)
+        private static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent)
         {
 
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
@@ -330,7 +320,7 @@ namespace CarenotesParentDocumentFinder
 
             if (response.IsSuccessful)
             {
-                inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content, patientId));
+                inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
                 {
@@ -347,7 +337,7 @@ namespace CarenotesParentDocumentFinder
 
                         if (response.IsSuccessful)
                         {
-                            inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content, patientId));
+                            inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content));
                         }
 
                         currentPageNumber++;
@@ -360,13 +350,13 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
-                throw new Exception($"API request was unsucessful: {response.ErrorException.Message}");
+                throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
 
 
         }
 
-        private static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent, int patientId)
+        private static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent)
         {
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 

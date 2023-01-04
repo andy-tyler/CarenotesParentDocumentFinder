@@ -45,7 +45,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     List<ParentDocument> parentDocuments = _common.GetParentDocuments(identifier);
 
-                    if (parentDocuments != null && parentDocuments.Count > 0)
+                    if (parentDocuments.Count > 0)
                     {
 
                         ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
@@ -89,7 +89,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 if (episodeId != null)
                 {
 
-                    communityEpisodes = APIClient.GetCommunityEpisodeDocuments(_apiClient, patientId, _pageSize);
+                    communityEpisodes = ApiClient.GetCommunityEpisodeDocuments(_apiClient, patientId, _pageSize);
 
                     mergedEpisodeData = (from c in communityEpisodes
                                          join p in parentDocuments
@@ -159,7 +159,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 if (episodeId != null)
                 {
 
-                    inpatientEpisodes = APIClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
+                    inpatientEpisodes = ApiClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
 
                     mergedEpisodeData = (from c in inpatientEpisodes
                                          join p in parentDocuments
@@ -184,7 +184,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 if (episodeId != null)
                 {
 
-                    inpatientEpisodes = APIClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
+                    inpatientEpisodes = ApiClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
 
                     mergedEpisodeData = (from c in inpatientEpisodes
                                          join p in parentDocuments

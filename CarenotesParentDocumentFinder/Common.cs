@@ -4,30 +4,30 @@ using CsvHelper.Configuration;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 
 namespace CarenotesParentDocumentFinder
 {
-    public class Common : IDisposable
+    public class Common
     {
-        private static string _patientIDFilePath = string.Empty;
+        private readonly string _patientIDFilePath;
 
-        private static RestClient _apiClient;
+        private readonly RestClient _apiClient;
 
         static List<int> identifiers = new List<int>();
 
-        private static int _objectTypeID;
+        private readonly int _objectTypeID;
 
-        private static int _pageSize;
-        private bool disposedValue;
+        private readonly int _pageSize;
 
         public Common(string patientIDFilePath, RestClient restClient, int objectTypeID, int pageSize)
         {
-            _patientIDFilePath = patientIDFilePath;
-            _apiClient = restClient;
-            _objectTypeID = objectTypeID;
-            _pageSize = pageSize;
+            this._patientIDFilePath = patientIDFilePath;
+            this._apiClient = restClient;
+            this._objectTypeID = objectTypeID;
+            this._pageSize = pageSize;
         }
 
         public List<int> GetPatientIdentifiersFromFile()
@@ -42,28 +42,20 @@ namespace CarenotesParentDocumentFinder
                 {
                     var records = new List<int>();
 
-
-
+                    csv.Read();
+                    
                     while (csv.Read())
                     {
-                        if (csv.Parser.Record.Length == 1)
-                        {
-                            identifiers.Add(csv.GetRecord<int>());
-                        }
-                        else
-                        {
-                            Console.WriteLine("ERROR: CSV file format invalid. Check that submission file only contains a single patient ID field per row.");
-                            return identifiers;
-                        }
-
+                        identifiers.Add(csv.GetRecord<int>());
                     }
-
-                    return identifiers;
                 }
+
+                return identifiers;
+
             }
             else
             {
-                throw new ArgumentNullException("File path for patient identifier CSV is null or missing.");
+                throw new ConfigurationErrorsException("File path for patient identifier CSV is null or missing.");
             }
 
         }
@@ -73,7 +65,7 @@ namespace CarenotesParentDocumentFinder
 
             List<ParentDocument> parentDocuments = new List<ParentDocument>();
 
-            parentDocuments.AddRange(APIClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize));
+            parentDocuments.AddRange(ApiClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize));
 
             return parentDocuments;
 
@@ -82,35 +74,6 @@ namespace CarenotesParentDocumentFinder
         public int GetObjectTypeID()
         {
             return _objectTypeID;
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects)
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
-                disposedValue = true;
-            }
-        }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~Common()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }
