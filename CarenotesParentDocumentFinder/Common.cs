@@ -12,7 +12,7 @@ namespace CarenotesParentDocumentFinder
 {
     public class Common
     {
-        private readonly string _patientIDFilePath = string.Empty;
+        private readonly string _patientIDFilePath;
 
         private readonly RestClient _apiClient;
 

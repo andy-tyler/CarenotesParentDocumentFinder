@@ -13,7 +13,7 @@ namespace CarenotesParentDocumentFinder
 {
     public static class ApiClient
     {
-        static string _apiSessionToken = string.Empty;
+        static string _apiSessionToken;
 
         static int _totalPages = -1;
 
@@ -172,51 +172,44 @@ namespace CarenotesParentDocumentFinder
 
         private static List<ParentDocument> ParseParentDocumentJson(string responseContent, int patientId)
         {
-            try
+
+            List<ParentDocument> parentDocuments = new List<ParentDocument>();
+
+            JObject json = JObject.Parse(responseContent);
+
+            var output = JsonConvert.DeserializeObject<object>(json.ToString());
+
+            int parentDocumentsCount = -1;
+
+            parentDocumentsCount = json.SelectToken("parentDocuments").Count();
+
+            _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+            for (int i = 0; i < parentDocumentsCount; i++)
             {
-
-                List<ParentDocument> parentDocuments = new List<ParentDocument>();
-
-                JObject json = JObject.Parse(responseContent);
-
-                var output = JsonConvert.DeserializeObject<object>(json.ToString());
-
-                int parentDocumentsCount = -1;
-
-                parentDocumentsCount = json.SelectToken("parentDocuments").Count();
-
-                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
-
-                for (int i = 0; i < parentDocumentsCount; i++)
+                parentDocuments.Add(new ParentDocument()
                 {
-                    parentDocuments.Add(new ParentDocument()
-                    {
-                        patientID = patientId,
+                    patientID = patientId,
 
-                        documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
+                    documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
 
-                        documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
+                    documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
 
-                        documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
+                    documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
 
-                        contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
+                    contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
 
-                        referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
+                    referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
 
-                        episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
+                    episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
 
-                        documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
+                    documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
 
-                        active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
-                    });
-                }
-
-                return parentDocuments;
+                    active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
+                });
             }
-            catch
-            {
-                throw;
-            }
+
+            return parentDocuments;
 
         }
 

@@ -212,21 +212,6 @@ namespace CarenotesParentDocumentFinder
             if (!File.Exists(_patientIDFilePath))
                 throw new FileNotFoundException("Specified CSV file does not exist or is incorrect.");
 
-            //FileAttributes fileAttributes = File.GetAttributes(_patientIDFilePath);
-
-            //switch(fileAttributes)
-            //{
-            //    case FileAttributes.Directory:
-            //        if(!Directory.Exists(_patientIDFilePath))
-            //        {
-            //            throw new FileNotFoundException("Invalid file path specifed.");
-            //        }
-            //        break;
-            //    default:
-            //        if (!File.Exists(_patientIDFilePath))
-            //            throw new FileNotFoundException("Invalid file path or filename specified.");
-            //        break;
-            //}
         }
 
     }
