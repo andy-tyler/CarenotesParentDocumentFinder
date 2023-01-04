@@ -14,8 +14,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 {
     public class EpisodeDocumentProcessor : IDisposable
     {
-        readonly int _outputFormat = 1;
-        readonly int _pageSize = 100;
+        readonly int _outputFormat;
+        readonly int _pageSize;
         readonly List<Episode> masterEpisodeList = new List<Episode>();
         private readonly RestClient _apiClient;
         readonly List<int> _identifiers;
