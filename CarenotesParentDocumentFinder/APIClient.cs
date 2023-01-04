@@ -11,9 +11,6 @@ using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder
 {
-
-
-
     public static class ApiClient
     {
         static string _apiSessionToken = string.Empty;
@@ -216,9 +213,8 @@ namespace CarenotesParentDocumentFinder
 
                 return parentDocuments;
             }
-            catch (Exception ex)
+            catch
             {
-                string n1 = ex.StackTrace;
                 throw;
             }
 

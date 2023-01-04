@@ -4,6 +4,7 @@ using CsvHelper.Configuration;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Globalization;
 using System.IO;
 
@@ -11,22 +12,22 @@ namespace CarenotesParentDocumentFinder
 {
     public class Common
     {
-        private static string _patientIDFilePath = string.Empty;
+        private readonly string _patientIDFilePath = string.Empty;
 
-        private static RestClient _apiClient;
+        private readonly RestClient _apiClient;
 
         static List<int> identifiers = new List<int>();
 
-        private static int _objectTypeID;
+        private readonly int _objectTypeID;
 
-        private static int _pageSize;
+        private readonly int _pageSize;
 
         public Common(string patientIDFilePath, RestClient restClient, int objectTypeID, int pageSize)
         {
-            _patientIDFilePath = patientIDFilePath;
-            _apiClient = restClient;
-            _objectTypeID = objectTypeID;
-            _pageSize = pageSize;
+            this._patientIDFilePath = patientIDFilePath;
+            this._apiClient = restClient;
+            this._objectTypeID = objectTypeID;
+            this._pageSize = pageSize;
         }
 
         public List<int> GetPatientIdentifiersFromFile()
@@ -54,7 +55,7 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
-                throw new ArgumentNullException("File path for patient identifier CSV is null or missing.");
+                throw new ConfigurationErrorsException("File path for patient identifier CSV is null or missing.");
             }
 
         }
