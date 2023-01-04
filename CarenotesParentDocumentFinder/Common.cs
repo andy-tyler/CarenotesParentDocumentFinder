@@ -9,7 +9,7 @@ using System.IO;
 
 namespace CarenotesParentDocumentFinder
 {
-    public class Common : IDisposable
+    public class Common
     {
         private static string _patientIDFilePath = string.Empty;
 
@@ -20,7 +20,6 @@ namespace CarenotesParentDocumentFinder
         private static int _objectTypeID;
 
         private static int _pageSize;
-        private bool disposedValue;
 
         public Common(string patientIDFilePath, RestClient restClient, int objectTypeID, int pageSize)
         {
@@ -42,24 +41,16 @@ namespace CarenotesParentDocumentFinder
                 {
                     var records = new List<int>();
 
-
-
+                    csv.Read();
+                    
                     while (csv.Read())
                     {
-                        if (csv.Parser.Record.Length == 1)
-                        {
-                            identifiers.Add(csv.GetRecord<int>());
-                        }
-                        else
-                        {
-                            Console.WriteLine("ERROR: CSV file format invalid. Check that submission file only contains a single patient ID field per row.");
-                            return identifiers;
-                        }
-
+                        identifiers.Add(csv.GetRecord<int>());
                     }
-
-                    return identifiers;
                 }
+
+                return identifiers;
+
             }
             else
             {
@@ -73,7 +64,7 @@ namespace CarenotesParentDocumentFinder
 
             List<ParentDocument> parentDocuments = new List<ParentDocument>();
 
-            parentDocuments.AddRange(APIClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize));
+            parentDocuments.AddRange(ApiClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize));
 
             return parentDocuments;
 
@@ -82,35 +73,6 @@ namespace CarenotesParentDocumentFinder
         public int GetObjectTypeID()
         {
             return _objectTypeID;
-        }
-
-        protected virtual void Dispose(bool disposing)
-        {
-            if (!disposedValue)
-            {
-                if (disposing)
-                {
-                    // TODO: dispose managed state (managed objects)
-                }
-
-                // TODO: free unmanaged resources (unmanaged objects) and override finalizer
-                // TODO: set large fields to null
-                disposedValue = true;
-            }
-        }
-
-        // // TODO: override finalizer only if 'Dispose(bool disposing)' has code to free unmanaged resources
-        // ~Common()
-        // {
-        //     // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-        //     Dispose(disposing: false);
-        // }
-
-        public void Dispose()
-        {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
-            Dispose(disposing: true);
-            GC.SuppressFinalize(this);
         }
     }
 }

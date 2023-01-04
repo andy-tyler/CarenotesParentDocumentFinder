@@ -14,13 +14,9 @@ namespace CarenotesParentDocumentFinder
 
 
 
-    public static class APIClient
+    public static class ApiClient
     {
         static string _apiSessionToken = string.Empty;
-
-        static SecureString _securePassword;
-
-        static string _username = string.Empty;
 
         static int _totalPages = -1;
 
@@ -33,55 +29,61 @@ namespace CarenotesParentDocumentFinder
 
             string userName = Console.ReadLine();
 
-            Console.Write("Carenotes password: ");
-
-            SecureString password = new SecureString();
-
-
-            while (true)
-            {
-                ConsoleKeyInfo consoleKeyInfo;
-                do
-                {
-                    consoleKeyInfo = Console.ReadKey(true);
-                    if (consoleKeyInfo.Key != ConsoleKey.Enter)
-                    {
-                        if (consoleKeyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
-                        {
-                            Console.Write("\b \b");
-                            password.RemoveAt(password.Length - 1);
-                        }
-                    }
-                    else
-                        goto label_6;
-                }
-                while (char.IsControl(consoleKeyInfo.KeyChar));
-                Console.Write("*");
-                password.AppendChar(consoleKeyInfo.KeyChar);
-            }
-
-        label_6:
-            password.MakeReadOnly();
-
-            _username = userName;
-
-            _securePassword = password;
+            SecureString securePassword = GetPassword();
 
             Console.WriteLine();
 
-
-            NetworkCredential creds = new NetworkCredential(string.Empty, _securePassword);
-
             RestRequest request = new RestRequest("session.json", Method.Post);
 
-            request.AddParameter("UserName", _username);
+            request.AddParameter("UserName", userName);
 
-            request.AddParameter("Password", new NetworkCredential("", _securePassword).Password);
+            request.AddParameter("Password", new NetworkCredential("", securePassword).Password);
 
             var response = apiClient.ExecutePost(request);
 
             Console.WriteLine();
 
+            CheckResponseStatus(response);
+        }
+
+        private static SecureString GetPassword()
+        {
+            Console.Write("Carenotes password: ");
+
+            SecureString password = new SecureString();
+            ConsoleKeyInfo keyInfo;
+
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+                // Skip if Backspace or Enter is Pressed
+                if (keyInfo.Key != ConsoleKey.Backspace && keyInfo.Key != ConsoleKey.Enter)
+                {
+                    password.AppendChar(keyInfo.KeyChar);
+                    Console.Write("*");
+                }
+                else
+                {
+                    if (keyInfo.Key == ConsoleKey.Backspace && password.Length > 0)
+                    {
+                        // Remove last charcter if Backspace is Pressed
+                        Console.Write("\b \b");
+                        password.RemoveAt(password.Length - 1);
+                    }
+                }
+            }
+            // Stops Getting Password Once Enter is Pressed
+            while (keyInfo.Key != ConsoleKey.Enter);
+
+            password.MakeReadOnly();
+
+            SecureString securePassword = password;
+
+            return securePassword;
+        }
+
+        private static void CheckResponseStatus(RestResponse response)
+        {
             if (response.IsSuccessful)
             {
 
