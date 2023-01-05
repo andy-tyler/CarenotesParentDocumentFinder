@@ -63,8 +63,15 @@ namespace CarenotesParentDocumentFinder
                 Console.WriteLine($"The API service at {ConfigurationManager.AppSettings["APIBaseURL"]} is not available, please contact AHC Support for further assistance.");
             }
 
-            Console.WriteLine("\nPress any key to exit...");
-            Console.ReadKey();
+            Console.WriteLine("\nPress the enter key to exit...");
+
+            ConsoleKeyInfo keyInfo;
+
+            do
+            {
+                keyInfo = Console.ReadKey(true);
+            }
+            while (keyInfo.Key != ConsoleKey.Enter);
 
         }
 
