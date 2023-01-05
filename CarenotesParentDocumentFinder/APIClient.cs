@@ -392,5 +392,93 @@ namespace CarenotesParentDocumentFinder
 
         }
 
+        public static List<TeamEpisode> GetTeamEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
+        {
+            List<TeamEpisode> inpatientEpisodes = new List<TeamEpisode>();
+
+            int currentPageNumber = 1;
+
+            RestRequest request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Team}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+            request.AddHeader("X-Session-Id", _apiSessionToken);
+
+            var response = apiClient.ExecuteGet(request);
+
+            if (response.IsSuccessful)
+            {
+                inpatientEpisodes.AddRange(ParseTeamEpisodeJson(response.Content));
+
+                if (_totalPages > 1)
+                {
+                    currentPageNumber++;
+
+                    while (currentPageNumber <= _totalPages)
+                    {
+
+                        pageSize = 1;
+
+                        request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Team}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
+
+                        response = apiClient.ExecuteGet(request);
+
+                        if (response.IsSuccessful)
+                        {
+                            inpatientEpisodes.AddRange(ParseTeamEpisodeJson(response.Content));
+                        }
+
+                        currentPageNumber++;
+
+                    }
+
+                }
+
+                return inpatientEpisodes;
+            }
+            else
+            {
+                throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
+            }
+
+        }
+
+        private static List<TeamEpisode> ParseTeamEpisodeJson(string responseContent)
+        {
+            List<TeamEpisode> teamEpisode = new List<TeamEpisode>();
+
+            JObject json = JObject.Parse(responseContent);
+
+            int teamEpisodeCount = -1;
+
+            teamEpisodeCount = json.SelectToken("teamEpisodeDetails").Count();
+
+            JToken nx;
+
+            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+
+            if (nx != null)
+                _totalPages = (int)json.SelectToken("pageDetails.totalPages");
+
+            for (int i = 0; i < teamEpisodeCount; i++)
+            {
+                teamEpisode.Add(new TeamEpisode()
+                {
+                    episodeID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].episodeID"),
+
+                    episodeTypeID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].episodeTypeID"),
+
+                    locationID = (int?)json.SelectToken("teamEpisodeDetails[" + i + "].locationID"),
+
+                    referralStatusID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].referralStatusID"),
+
+                    serviceID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].serviceID"),
+
+                    locationDesc = (string)json.SelectToken("teamEpisodeDetails[" + i + "].locationDesc")
+
+                });
+            }
+
+            return teamEpisode;
+        }
+
     }
 }

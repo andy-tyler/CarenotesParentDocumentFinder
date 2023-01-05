@@ -53,6 +53,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                         ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
 
+                        ListTeamEpisodeParentDocuments(parentDocuments, identifier);
                     }
                     counterPosition++;
                 }
@@ -228,6 +229,99 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
                 {
                     Console.WriteLine($"\tNo active inpatient episodes were found patient ID: {patientId}\n");
+                }
+            }
+        }
+
+        private void ListTeamEpisodeParentDocuments(List<ParentDocument> parentDocuments, int patientId)
+        {
+
+            var episodeIds = (from ce in parentDocuments
+                              where ce.patientID == patientId
+                              where ce.documentTypeID == 110
+                              select ce.episodeId).Distinct().ToList();
+
+            List<TeamEpisode> teamEpisodes = new List<TeamEpisode>();
+
+            List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+
+            var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
+
+            Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
+            {
+                if (episodeId != null)
+                {
+
+                    teamEpisodes = ApiClient.GetTeamEpisodeDocuments(_apiClient, patientId, _pageSize);
+
+                    mergedEpisodeData = (from c in teamEpisodes
+                                         join p in parentDocuments
+                                         on c.episodeID equals p.contextualId
+                                         select new MergedEpisodeData
+                                         {
+                                             Contextual_ID = p.contextualId,
+                                             Episode_ID = c.episodeID,
+                                             Episode_Location_ID = c.locationID,
+                                             Episode_Location_Description = c.locationDesc,
+                                             Parent_CN_Doc_ID = p.documentId,
+                                             Patient_ID = p.patientID,
+                                             Service_ID = c.serviceID
+                                         }).ToList<MergedEpisodeData>();
+
+                }
+
+            });
+
+            foreach (int? episodeId in episodeIds)
+            {
+                if (episodeId != null)
+                {
+
+                    teamEpisodes = ApiClient.GetTeamEpisodeDocuments(_apiClient, patientId, _pageSize);
+
+                    mergedEpisodeData = (from c in teamEpisodes
+                                         join p in parentDocuments
+                                         on c.episodeID equals p.contextualId
+                                         select new MergedEpisodeData
+                                         {
+                                             Contextual_ID = p.contextualId,
+                                             Episode_ID = c.episodeID,
+                                             Episode_Location_ID = c.locationID,
+                                             Episode_Location_Description = c.locationDesc,
+                                             Parent_CN_Doc_ID = p.documentId,
+                                             Patient_ID = p.patientID,
+                                             Service_ID = c.serviceID
+                                         }).ToList<MergedEpisodeData>();
+
+                }
+            }
+
+            if (mergedEpisodeData.Any())
+            {
+
+                foreach (MergedEpisodeData episode in mergedEpisodeData)
+                {
+                    masterEpisodeList.Add(
+                        new Episode
+                        {
+                            episodeID = episode.Episode_ID,
+                            episodeTypeID = (int)PicklistValues.EpisodeType.Team,
+                            locationDesc = episode.Episode_Location_Description,
+                            locationID = episode.Episode_Location_ID,
+                            referralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                            serviceID = episode.Service_ID,
+                            cnDocID = episode.Parent_CN_Doc_ID,
+                            patientID = episode.Patient_ID
+                        });
+                }
+
+
+            }
+            else
+            {
+                if (_outputFormat == (int)PicklistValues.OutputMethod.Verbose)
+                {
+                    Console.WriteLine($"\tNo active team episodes were found patient ID: {patientId}\n");
                 }
             }
         }

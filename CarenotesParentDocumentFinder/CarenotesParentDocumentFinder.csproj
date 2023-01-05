@@ -98,6 +98,7 @@
     <Compile Include="Data\MergedEpisodeData.cs" />
     <Compile Include="Data\ParentDocument.cs" />
     <Compile Include="Data\PicklistValues.cs" />
+    <Compile Include="Data\TeamEpisode.cs" />
     <Compile Include="EpisodeDocumentProcessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Helpers\ProgressBar.cs" />
