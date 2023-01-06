@@ -368,7 +368,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 csv.WriteRecords(masterEpisodeList);
             }
 
-            Console.WriteLine($"\nParent document identifiers written to: {0}\\parent-identifiers-{filestringtime}.csv", di.FullName);
+            Console.WriteLine($"\nParent document identifiers written to: " + di.FullName + "\\parent-identifiers-" + filestringtime + ".csv");
         }
 
         protected virtual void Dispose(bool disposing)
