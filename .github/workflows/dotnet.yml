@@ -29,7 +29,6 @@ jobs:
       run: |
           nuget restore CarenotesParentDocumentFinder.sln
           msbuild.exe CarenotesParentDocumentFinder.sln /p:platform="Any CPU" /p:configuration="Release"
-              - name: Upload build artifacts
     - name: Upload build artifacts
       uses: actions/upload-artifact@v3
       with:
