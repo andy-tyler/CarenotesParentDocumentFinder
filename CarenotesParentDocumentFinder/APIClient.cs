@@ -480,5 +480,13 @@ namespace CarenotesParentDocumentFinder
             return teamEpisode;
         }
 
+        public static bool SessionTokenExists()
+        {
+            if (string.IsNullOrEmpty(_apiSessionToken))
+                return false;
+
+            return true;
+        }
+
     }
 }
