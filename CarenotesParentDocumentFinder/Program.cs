@@ -139,18 +139,7 @@ namespace CarenotesParentDocumentFinder
 
                     if (RecursiveSearchEnabled())
                     {
-                        List<FileInfo> fileList = GetFileList(_patientIDFilePath);
-
-                        for (int i = 0; i < fileList.Count; i++)
-                        {
-                            _patientIDFilePath = fileList[i].FullName;
-
-                            _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
-
-                            Console.WriteLine($"\nProcessing file {i + 1} of {fileList.Count} - {fileList[i].FullName}.");
-
-                            ProcessPatientIDFile();
-                        }
+                        ProcessRecursiveFileList(_objectTypeID);
                     }
                     else
                     {
@@ -178,18 +167,7 @@ namespace CarenotesParentDocumentFinder
 
                 if (RecursiveSearchEnabled())
                 {
-                    List<FileInfo> fileList = GetFileList(_patientIDFilePath);
-
-                    for (int i = 0; i < fileList.Count; i++)
-                    {
-                        _patientIDFilePath = fileList[i].FullName;
-
-                        _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
-
-                        Console.WriteLine($"\nProcessing file {i + 1} of {fileList.Count} - {fileList[i].FullName}.");
-
-                        ProcessPatientIDFile();
-                    }
+                    ProcessRecursiveFileList(_objectTypeID);
                 }
                 else
                 {
@@ -335,6 +313,22 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("Example: CarenotesParentDocumentFinder.exe /notes\n");
             Console.WriteLine("An optional parameter can be included to define the file path to override the configuration file setting:\n");
             Console.WriteLine("Example: CarenotesParentDocumentFinder.exe /notes -f \"c:\\drops\\patientidentifiers.csv\"");
+        }
+
+        static void ProcessRecursiveFileList(int _objectTypeID)
+        {
+            List<FileInfo> fileList = GetFileList(_patientIDFilePath);
+
+            for (int i = 0; i < fileList.Count; i++)
+            {
+                _patientIDFilePath = fileList[i].FullName;
+
+                _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+
+                Console.WriteLine($"\nProcessing file {i + 1} of {fileList.Count} - {fileList[i].FullName}.");
+
+                ProcessPatientIDFile();
+            }
         }
 
     }
