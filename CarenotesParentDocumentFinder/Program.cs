@@ -16,7 +16,7 @@ namespace CarenotesParentDocumentFinder
 
         static int _pageSize = 100;
 
-        static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
+        static readonly RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
         static int _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
 
@@ -28,6 +28,8 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("******************************************************");
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
+
+            if (args.Length > 0 && args[0] == "/?") DisplayHelpText();
 
             if (ApiClient.apiIsAvailable(_apiClient))
             {
@@ -103,11 +105,6 @@ namespace CarenotesParentDocumentFinder
 
             switch (startupArgs[0])
             {
-                case "/?":
-                    {
-                        DisplayHelpText();
-                        break;
-                    }
                 case "/notes":
                     {
 
@@ -142,7 +139,7 @@ namespace CarenotesParentDocumentFinder
 
                     if (RecursiveSearchEnabled())
                     {
-                        List<FileInfo> fileList = getFileList(_patientIDFilePath);
+                        List<FileInfo> fileList = GetFileList(_patientIDFilePath);
 
                         for (int i = 0; i < fileList.Count; i++)
                         {
@@ -181,7 +178,7 @@ namespace CarenotesParentDocumentFinder
 
                 if (RecursiveSearchEnabled())
                 {
-                    List<FileInfo> fileList = getFileList(_patientIDFilePath);
+                    List<FileInfo> fileList = GetFileList(_patientIDFilePath);
 
                     for (int i = 0; i < fileList.Count; i++)
                     {
@@ -212,7 +209,7 @@ namespace CarenotesParentDocumentFinder
 
             Stopwatch processStopWatch = new Stopwatch();
 
-            LoggedIntoApi();
+            RequestApiSessionToken();
 
             processStopWatch.Start();
 
@@ -289,7 +286,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        static List<FileInfo> getFileList(string filePath)
+        static List<FileInfo> GetFileList(string filePath)
         {
             List<FileInfo> fileList = new List<FileInfo>();
 
@@ -308,7 +305,7 @@ namespace CarenotesParentDocumentFinder
             return fileList;
         }
 
-        static bool LoggedIntoApi()
+        static bool RequestApiSessionToken()
         {
             if (ApiClient.SessionTokenExists()) return true;
 
