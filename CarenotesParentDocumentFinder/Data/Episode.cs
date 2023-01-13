@@ -8,14 +8,13 @@ namespace CarenotesParentDocumentFinder.Data
 {
     internal class Episode
     {
-        public int patientID { get; set; }
-        public int episodeID { get; set; }
-        public int episodeTypeID { get; set; }
-        public int? locationID { get; set; }
-        public string locationDesc { get; set; }
-        public int serviceID { get; set; }
-        public int referralStatusID { get; set; }
-
-        public int cnDocID { get; set; }
+        public int PatientID { get; set; }
+        public int EpisodeID { get; set; }
+        public int EpisodeTypeID { get; set; }
+        public int? LocationID { get; set; }
+        public string LocationDesc { get; set; }
+        public int ServiceID { get; set; }
+        public int ReferralStatusID { get; set; }
+        public int CnDocID { get; set; }
     }
 }

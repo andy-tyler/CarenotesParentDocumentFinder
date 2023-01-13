@@ -16,7 +16,7 @@ namespace CarenotesParentDocumentFinder
 
         private readonly RestClient _apiClient;
 
-        static List<int> identifiers = new List<int>();
+        static readonly List<int> identifiers = new List<int>();
 
         private readonly int _objectTypeID;
 

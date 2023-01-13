@@ -31,7 +31,7 @@ namespace CarenotesParentDocumentFinder
 
             if (args.Length > 0 && args[0] == "/?") DisplayHelpText();
 
-            if (ApiClient.apiIsAvailable(_apiClient))
+            if (ApiClient.ApiIsAvailable(_apiClient))
             {
                 try
                 {
@@ -77,8 +77,6 @@ namespace CarenotesParentDocumentFinder
             while (keyInfo.Key != ConsoleKey.Enter);
 
         }
-
-        /// Example: /notes -f "c:\drops\randompatientsample.csv"
 
         static void ProcessStartupParameters(string[] startupArgs)
         {
@@ -305,13 +303,12 @@ namespace CarenotesParentDocumentFinder
             return fileList;
         }
 
-        static bool RequestApiSessionToken()
+        static void RequestApiSessionToken()
         {
-            if (ApiClient.SessionTokenExists()) return true;
+
+            if (ApiClient.SessionTokenExists()) return;
 
             ApiClient.GetSessionToken(_apiClient);
-
-            return true;
 
         }
 

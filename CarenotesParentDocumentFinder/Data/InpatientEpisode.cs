@@ -8,11 +8,11 @@ namespace CarenotesParentDocumentFinder.Data
 {
     public class InpatientEpisode
     {
-        public int episodeID { get; set; }
-        public int episodeTypeID { get; set; }
-        public int? locationID { get; set; }
-        public string locationDesc { get; set; }
-        public int serviceID { get; set; }
-        public int referralStatusID { get; set; }
+        public int EpisodeID { get; set; }
+        public int EpisodeTypeID { get; set; }
+        public int? LocationID { get; set; }
+        public string LocationDesc { get; set; }
+        public int ServiceID { get; set; }
+        public int ReferralStatusID { get; set; }
     }
 }
