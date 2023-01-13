@@ -101,6 +101,8 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
 
+            RequestApiSessionToken();
+
             switch (startupArgs[0])
             {
                 case "/notes":
@@ -207,9 +209,9 @@ namespace CarenotesParentDocumentFinder
 
             Stopwatch processStopWatch = new Stopwatch();
 
-            RequestApiSessionToken();
-
             processStopWatch.Start();
+
+            RequestApiSessionToken();
 
             List<int> patientIdentifiers = _common.GetPatientIdentifiersFromFile();
 

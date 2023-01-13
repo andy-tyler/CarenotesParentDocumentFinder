@@ -37,8 +37,6 @@ namespace CarenotesParentDocumentFinder
 
             var response = apiClient.ExecutePost(request);
 
-            Console.WriteLine();
-
             CheckResponseStatus(response);
         }
 
