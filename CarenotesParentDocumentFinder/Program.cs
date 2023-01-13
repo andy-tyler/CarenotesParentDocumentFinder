@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Configuration;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 
 namespace CarenotesParentDocumentFinder
 {
@@ -15,7 +16,7 @@ namespace CarenotesParentDocumentFinder
 
         static int _pageSize = 100;
 
-        static RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
+        static readonly RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
         static int _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
 
@@ -28,7 +29,9 @@ namespace CarenotesParentDocumentFinder
             Console.WriteLine("Carenotes Parent document reference extract tool v1.0");
             Console.WriteLine("******************************************************");
 
-            if (ApiClient.apiIsAvailable(_apiClient))
+            if (args.Length > 0 && args[0] == "/?") DisplayHelpText();
+
+            if (ApiClient.ApiIsAvailable(_apiClient))
             {
                 try
                 {
@@ -75,8 +78,6 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        /// Example: /notes -f "c:\drops\randompatientsample.csv"
-
         static void ProcessStartupParameters(string[] startupArgs)
         {
             if (startupArgs.Length == 0)
@@ -98,51 +99,22 @@ namespace CarenotesParentDocumentFinder
 
             SetCSVFilePath(startupArgs);
 
+            Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
+
+            RequestApiSessionToken();
+
             switch (startupArgs[0])
             {
-                case "/?":
-                    {
-                        break;
-                    }
                 case "/notes":
                     {
 
-                        if (!string.IsNullOrEmpty(_patientIDFilePath))
-                        {
-
-                            int _objectTypeID = 50;
-
-                            _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
-
-                            ProcessPatientIDFile();
-                        }
-                        else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+                        ProcessNotes();
 
                         break;
                     }
                 case "/attachments":
                     {
-
-                        int _objectTypeID;
-
-                        if (!string.IsNullOrEmpty(_patientIDFilePath))
-                        {
-                            int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out _objectTypeID);
-
-                            if (_objectTypeID != -1)
-                            {
-
-                                _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
-
-                                ProcessPatientIDFile();
-                            }
-                            else
-                            {
-                                throw new ArgumentException("Attachment UDF object type ID missing or invalid. Check value specified in configuration file is specified and valid.");
-                            }
-
-                        }
-                        else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+                        ProcessAttachments();
 
                         break;
                     }
@@ -156,16 +128,68 @@ namespace CarenotesParentDocumentFinder
 
         }
 
+        private static void ProcessAttachments()
+        {
+            if (!string.IsNullOrEmpty(_patientIDFilePath))
+            {
+                int.TryParse(ConfigurationManager.AppSettings["AttachmentsObjectTypeID"], out int _objectTypeID);
+
+                if (_objectTypeID != -1)
+                {
+
+                    if (RecursiveSearchEnabled())
+                    {
+                        ProcessRecursiveFileList(_objectTypeID);
+                    }
+                    else
+                    {
+                        _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+
+                        ProcessPatientIDFile();
+
+                    }
+                }
+                else
+                {
+                    throw new ArgumentException("Attachment UDF object type ID missing or invalid. Check value specified in configuration file is specified and valid.");
+                }
+
+            }
+            else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+        }
+
+        private static void ProcessNotes()
+        {
+            if (!string.IsNullOrEmpty(_patientIDFilePath))
+            {
+
+                int _objectTypeID = 50;
+
+                if (RecursiveSearchEnabled())
+                {
+                    ProcessRecursiveFileList(_objectTypeID);
+                }
+                else
+                {
+                    _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+
+                    Console.WriteLine($"\nProcessing file {_patientIDFilePath}.");
+
+                    ProcessPatientIDFile();
+                }
+
+            }
+            else throw new FileNotFoundException("CSV file not specified or not found. Check file path is set in configuration file or specify a command line parameter.");
+        }
+
         static void ProcessPatientIDFile()
         {
 
             Stopwatch processStopWatch = new Stopwatch();
 
-            Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
-
-            ApiClient.GetSessionToken(_apiClient);
-
             processStopWatch.Start();
+
+            RequestApiSessionToken();
 
             List<int> patientIdentifiers = _common.GetPatientIdentifiersFromFile();
 
@@ -210,14 +234,101 @@ namespace CarenotesParentDocumentFinder
                 }
             }
 
-            if(string.IsNullOrEmpty(_patientIDFilePath))
+            if (string.IsNullOrEmpty(_patientIDFilePath))
             {
                 throw new ArgumentException("File path flag not set.");
             }
 
-            if (!File.Exists(_patientIDFilePath))
-                throw new FileNotFoundException("Specified CSV file does not exist or is incorrect.");
 
+            bool.TryParse(ConfigurationManager.AppSettings["RecursiveSearch"], out bool recursiveSearchEnabled);
+
+            if (recursiveSearchEnabled && !_patientIDFilePath.EndsWith(".csv"))
+            {
+                if (Directory.Exists(_patientIDFilePath))
+                {
+                    return;
+                }
+
+                throw new DirectoryNotFoundException("Specified directory does not exist or is incorrect.");
+            }
+
+
+            if (File.Exists(_patientIDFilePath))
+            {
+                return;
+            }
+
+            throw new FileNotFoundException("Specified CSV file does not exist or is incorrect.");
+
+
+
+        }
+
+        static List<FileInfo> GetFileList(string filePath)
+        {
+            List<FileInfo> fileList = new List<FileInfo>();
+
+            DirectoryInfo directoryInfo = new DirectoryInfo(filePath);
+
+            IEnumerable<FileInfo> files = directoryInfo.GetFiles();
+
+            IEnumerable<FileInfo> fileInfoQuery = from file in files
+                                                  where file.Extension == ".csv"
+                                                  orderby file.Name
+                                                  select file;
+
+            foreach (FileInfo fileInfo in fileInfoQuery)
+                fileList.Add(fileInfo);
+
+            return fileList;
+        }
+
+        static void RequestApiSessionToken()
+        {
+
+            if (ApiClient.SessionTokenExists()) return;
+
+            ApiClient.GetSessionToken(_apiClient);
+
+        }
+
+        static bool RecursiveSearchEnabled()
+        {
+            bool.TryParse(ConfigurationManager.AppSettings["RecursiveSearch"], out bool recursiveSearchEnabled);
+
+            if (recursiveSearchEnabled && !_patientIDFilePath.EndsWith(".csv"))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        static void DisplayHelpText()
+        {
+            Console.WriteLine("This utility requires a command line argument to define what document type should be processed.\n");
+            Console.WriteLine("This version supports the following document types:\n");
+            Console.WriteLine("\t/notes\n\t/attachments\n");
+            Console.WriteLine("If no additional parameters are defined then the file path defined in the configuration file will be used.\n");
+            Console.WriteLine("Example: CarenotesParentDocumentFinder.exe /notes\n");
+            Console.WriteLine("An optional parameter can be included to define the file path to override the configuration file setting:\n");
+            Console.WriteLine("Example: CarenotesParentDocumentFinder.exe /notes -f \"c:\\drops\\patientidentifiers.csv\"");
+        }
+
+        static void ProcessRecursiveFileList(int _objectTypeID)
+        {
+            List<FileInfo> fileList = GetFileList(_patientIDFilePath);
+
+            for (int i = 0; i < fileList.Count; i++)
+            {
+                _patientIDFilePath = fileList[i].FullName;
+
+                _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+
+                Console.WriteLine($"\nProcessing file {i + 1} of {fileList.Count} - {fileList[i].FullName}.");
+
+                ProcessPatientIDFile();
+            }
         }
 
     }

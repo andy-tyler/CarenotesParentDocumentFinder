@@ -1,5 +1,4 @@
 ﻿using CarenotesParentDocumentFinder.Data;
-using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
@@ -37,8 +36,6 @@ namespace CarenotesParentDocumentFinder
             request.AddParameter("Password", new NetworkCredential("", securePassword).Password);
 
             var response = apiClient.ExecutePost(request);
-
-            Console.WriteLine();
 
             CheckResponseStatus(response);
         }
@@ -100,7 +97,7 @@ namespace CarenotesParentDocumentFinder
             }
         }
 
-        public static bool apiIsAvailable(RestClient apiClient)
+        public static bool ApiIsAvailable(RestClient apiClient)
         {
 
             RestRequest request = new RestRequest("ping", Method.Get);
@@ -174,12 +171,8 @@ namespace CarenotesParentDocumentFinder
         {
 
             List<ParentDocument> parentDocuments = new List<ParentDocument>();
-
             JObject json = JObject.Parse(responseContent);
-
-            int parentDocumentsCount = -1;
-
-            parentDocumentsCount = json.SelectToken("parentDocuments").Count();
+            int parentDocumentsCount = json.SelectToken("parentDocuments").Count();
 
             _totalPages = (int)json.SelectToken("pageDetails.totalPages");
 
@@ -187,23 +180,23 @@ namespace CarenotesParentDocumentFinder
             {
                 parentDocuments.Add(new ParentDocument()
                 {
-                    patientID = patientId,
+                    PatientID = patientId,
 
-                    documentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
+                    DocumentTypeID = (int)json.SelectToken("parentDocuments[" + i + "].documentTypeId"),
 
-                    documentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
+                    DocumentTypeDescription = (string)json.SelectToken("parentDocuments[" + i + "].documentTypeDescription"),
 
-                    documentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
+                    DocumentId = (int)json.SelectToken("parentDocuments[" + i + "].documentId"),
 
-                    contextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
+                    ContextualId = (int)json.SelectToken("parentDocuments[" + i + "].contextualId"),
 
-                    referralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
+                    ReferralId = (int?)json.SelectToken("parentDocuments[" + i + "].referralId"),
 
-                    episodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
+                    EpisodeId = (int?)json.SelectToken("parentDocuments[" + i + "].episodeId"),
 
-                    documentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
+                    DocumentSummary = (string)json.SelectToken("parentDocuments[" + i + "].documentSummary"),
 
-                    active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
+                    Active = (bool)json.SelectToken("parentDocuments[" + i + "].active")
                 });
             }
 
@@ -266,14 +259,8 @@ namespace CarenotesParentDocumentFinder
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
 
             JObject json = JObject.Parse(responseContent);
-
-            int communityEpisodeCount = -1;
-
-            communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
-
-            JToken nx;
-
-            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+            int communityEpisodeCount = json.SelectToken("communityEpisodeDetails").Count();
+            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out JToken nx);
 
             if (nx != null)
                 _totalPages = (int)json.SelectToken("pageDetails.totalPages");
@@ -282,17 +269,17 @@ namespace CarenotesParentDocumentFinder
             {
                 communityEpisodes.Add(new CommunityEpisode()
                 {
-                    episodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
+                    EpisodeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeID"),
 
-                    episodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
+                    EpisodeTypeID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].episodeTypeID"),
 
-                    locationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
+                    LocationID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].locationID"),
 
-                    referralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
+                    ReferralStatusID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].referralStatusID"),
 
-                    serviceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
+                    ServiceID = (int)json.SelectToken("communityEpisodeDetails[" + i + "].serviceID"),
 
-                    locationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
+                    LocationDesc = (string)json.SelectToken("communityEpisodeDetails[" + i + "].locationDesc")
 
                 });
             }
@@ -357,14 +344,8 @@ namespace CarenotesParentDocumentFinder
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
             JObject json = JObject.Parse(responseContent);
-
-            int inpatientEpisodeCount = -1;
-
-            inpatientEpisodeCount = json.SelectToken("inpatientEpisodeDetails").Count();
-
-            JToken nx;
-
-            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+            int inpatientEpisodeCount = json.SelectToken("inpatientEpisodeDetails").Count();
+            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out JToken nx);
 
             if (nx != null)
                 _totalPages = (int)json.SelectToken("pageDetails.totalPages");
@@ -373,17 +354,17 @@ namespace CarenotesParentDocumentFinder
             {
                 inpatientEpisodes.Add(new InpatientEpisode()
                 {
-                    episodeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeID"),
+                    EpisodeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeID"),
 
-                    episodeTypeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeTypeID"),
+                    EpisodeTypeID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].episodeTypeID"),
 
-                    locationID = (int?)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationID"),
+                    LocationID = (int?)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationID"),
 
-                    referralStatusID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].referralStatusID"),
+                    ReferralStatusID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].referralStatusID"),
 
-                    serviceID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].serviceID"),
+                    ServiceID = (int)json.SelectToken("inpatientEpisodeDetails[" + i + "].serviceID"),
 
-                    locationDesc = (string)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationDesc")
+                    LocationDesc = (string)json.SelectToken("inpatientEpisodeDetails[" + i + "].locationDesc")
 
                 });
             }
@@ -446,14 +427,8 @@ namespace CarenotesParentDocumentFinder
             List<TeamEpisode> teamEpisode = new List<TeamEpisode>();
 
             JObject json = JObject.Parse(responseContent);
-
-            int teamEpisodeCount = -1;
-
-            teamEpisodeCount = json.SelectToken("teamEpisodeDetails").Count();
-
-            JToken nx;
-
-            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out nx);
+            int teamEpisodeCount = json.SelectToken("teamEpisodeDetails").Count();
+            json.TryGetValue("pageDetails.totalPages", StringComparison.InvariantCulture, out JToken nx);
 
             if (nx != null)
                 _totalPages = (int)json.SelectToken("pageDetails.totalPages");
@@ -462,22 +437,30 @@ namespace CarenotesParentDocumentFinder
             {
                 teamEpisode.Add(new TeamEpisode()
                 {
-                    episodeID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].episodeID"),
+                    EpisodeID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].episodeID"),
 
-                    episodeTypeID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].episodeTypeID"),
+                    EpisodeTypeID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].episodeTypeID"),
 
-                    locationID = (int?)json.SelectToken("teamEpisodeDetails[" + i + "].locationID"),
+                    LocationID = (int?)json.SelectToken("teamEpisodeDetails[" + i + "].locationID"),
 
-                    referralStatusID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].referralStatusID"),
+                    ReferralStatusID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].referralStatusID"),
 
-                    serviceID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].serviceID"),
+                    ServiceID = (int)json.SelectToken("teamEpisodeDetails[" + i + "].serviceID"),
 
-                    locationDesc = (string)json.SelectToken("teamEpisodeDetails[" + i + "].locationDesc")
+                    LocationDesc = (string)json.SelectToken("teamEpisodeDetails[" + i + "].locationDesc")
 
                 });
             }
 
             return teamEpisode;
+        }
+
+        public static bool SessionTokenExists()
+        {
+            if (string.IsNullOrEmpty(_apiSessionToken))
+                return false;
+
+            return true;
         }
 
     }

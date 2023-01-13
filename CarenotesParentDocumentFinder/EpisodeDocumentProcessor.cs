@@ -76,9 +76,9 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         {
 
             var episodeIds = (from ce in parentDocuments
-                              where ce.patientID == patientId
-                              where ce.documentTypeID == 52
-                              select ce.episodeId).Distinct().ToList();
+                              where ce.PatientID == patientId
+                              where ce.DocumentTypeID == 52
+                              select ce.EpisodeId).Distinct().ToList();
 
             List<CommunityEpisode> communityEpisodes;
 
@@ -93,16 +93,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     mergedEpisodeData = (from c in communityEpisodes
                                          join p in parentDocuments
-                                         on c.episodeID equals p.contextualId
+                                         on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
                                          {
-                                             Contextual_ID = p.contextualId,
-                                             Episode_ID = c.episodeID,
-                                             Episode_Location_ID = c.locationID,
-                                             Episode_Location_Description = c.locationDesc,
-                                             Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID,
-                                             Service_ID = c.serviceID
+                                             Contextual_ID = p.ContextualId,
+                                             Episode_ID = c.EpisodeID,
+                                             Episode_Location_ID = c.LocationID,
+                                             Episode_Location_Description = c.LocationDesc,
+                                             Parent_CN_Doc_ID = p.DocumentId,
+                                             Patient_ID = p.PatientID,
+                                             Service_ID = c.ServiceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -116,14 +116,14 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                     masterEpisodeList.Add(
                         new Episode
                         {
-                            episodeID = episode.Episode_ID,
-                            episodeTypeID = (int)PicklistValues.EpisodeType.Community,
-                            locationDesc = episode.Episode_Location_Description,
-                            locationID = episode.Episode_Location_ID,
-                            referralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
-                            serviceID = episode.Service_ID,
-                            cnDocID = episode.Parent_CN_Doc_ID,
-                            patientID = episode.Patient_ID
+                            EpisodeID = episode.Episode_ID,
+                            EpisodeTypeID = (int)PicklistValues.EpisodeType.Community,
+                            LocationDesc = episode.Episode_Location_Description,
+                            LocationID = episode.Episode_Location_ID,
+                            ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                            ServiceID = episode.Service_ID,
+                            CnDocID = episode.Parent_CN_Doc_ID,
+                            PatientID = episode.Patient_ID
                         });
                 }
 
@@ -144,9 +144,9 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         {
 
             var episodeIds = (from ce in parentDocuments
-                              where ce.patientID == patientId
-                              where ce.documentTypeID == 75
-                              select ce.episodeId).Distinct().ToList();
+                              where ce.PatientID == patientId
+                              where ce.DocumentTypeID == 75
+                              select ce.EpisodeId).Distinct().ToList();
 
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
@@ -163,16 +163,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     mergedEpisodeData = (from c in inpatientEpisodes
                                          join p in parentDocuments
-                                         on c.episodeID equals p.contextualId
+                                         on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
                                          {
-                                             Contextual_ID = p.contextualId,
-                                             Episode_ID = c.episodeID,
-                                             Episode_Location_ID = c.locationID,
-                                             Episode_Location_Description = c.locationDesc,
-                                             Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID,
-                                             Service_ID = c.serviceID
+                                             Contextual_ID = p.ContextualId,
+                                             Episode_ID = c.EpisodeID,
+                                             Episode_Location_ID = c.LocationID,
+                                             Episode_Location_Description = c.LocationDesc,
+                                             Parent_CN_Doc_ID = p.DocumentId,
+                                             Patient_ID = p.PatientID,
+                                             Service_ID = c.ServiceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -188,16 +188,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     mergedEpisodeData = (from c in inpatientEpisodes
                                          join p in parentDocuments
-                                         on c.episodeID equals p.contextualId
+                                         on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
                                          {
-                                             Contextual_ID = p.contextualId,
-                                             Episode_ID = c.episodeID,
-                                             Episode_Location_ID = c.locationID,
-                                             Episode_Location_Description = c.locationDesc,
-                                             Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID,
-                                             Service_ID = c.serviceID
+                                             Contextual_ID = p.ContextualId,
+                                             Episode_ID = c.EpisodeID,
+                                             Episode_Location_ID = c.LocationID,
+                                             Episode_Location_Description = c.LocationDesc,
+                                             Parent_CN_Doc_ID = p.DocumentId,
+                                             Patient_ID = p.PatientID,
+                                             Service_ID = c.ServiceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -211,14 +211,14 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                     masterEpisodeList.Add(
                         new Episode
                         {
-                            episodeID = episode.Episode_ID,
-                            episodeTypeID = (int)PicklistValues.EpisodeType.Inpatient,
-                            locationDesc = episode.Episode_Location_Description,
-                            locationID = episode.Episode_Location_ID,
-                            referralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
-                            serviceID = episode.Service_ID,
-                            cnDocID = episode.Parent_CN_Doc_ID,
-                            patientID = episode.Patient_ID
+                            EpisodeID = episode.Episode_ID,
+                            EpisodeTypeID = (int)PicklistValues.EpisodeType.Inpatient,
+                            LocationDesc = episode.Episode_Location_Description,
+                            LocationID = episode.Episode_Location_ID,
+                            ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                            ServiceID = episode.Service_ID,
+                            CnDocID = episode.Parent_CN_Doc_ID,
+                            PatientID = episode.Patient_ID
                         });
                 }
 
@@ -237,9 +237,9 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         {
 
             var episodeIds = (from ce in parentDocuments
-                              where ce.patientID == patientId
-                              where ce.documentTypeID == 110
-                              select ce.episodeId).Distinct().ToList();
+                              where ce.PatientID == patientId
+                              where ce.DocumentTypeID == 110
+                              select ce.EpisodeId).Distinct().ToList();
 
             List<TeamEpisode> teamEpisodes = new List<TeamEpisode>();
 
@@ -256,16 +256,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     mergedEpisodeData = (from c in teamEpisodes
                                          join p in parentDocuments
-                                         on c.episodeID equals p.contextualId
+                                         on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
                                          {
-                                             Contextual_ID = p.contextualId,
-                                             Episode_ID = c.episodeID,
-                                             Episode_Location_ID = c.locationID,
-                                             Episode_Location_Description = c.locationDesc,
-                                             Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID,
-                                             Service_ID = c.serviceID
+                                             Contextual_ID = p.ContextualId,
+                                             Episode_ID = c.EpisodeID,
+                                             Episode_Location_ID = c.LocationID,
+                                             Episode_Location_Description = c.LocationDesc,
+                                             Parent_CN_Doc_ID = p.DocumentId,
+                                             Patient_ID = p.PatientID,
+                                             Service_ID = c.ServiceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -281,16 +281,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     mergedEpisodeData = (from c in teamEpisodes
                                          join p in parentDocuments
-                                         on c.episodeID equals p.contextualId
+                                         on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
                                          {
-                                             Contextual_ID = p.contextualId,
-                                             Episode_ID = c.episodeID,
-                                             Episode_Location_ID = c.locationID,
-                                             Episode_Location_Description = c.locationDesc,
-                                             Parent_CN_Doc_ID = p.documentId,
-                                             Patient_ID = p.patientID,
-                                             Service_ID = c.serviceID
+                                             Contextual_ID = p.ContextualId,
+                                             Episode_ID = c.EpisodeID,
+                                             Episode_Location_ID = c.LocationID,
+                                             Episode_Location_Description = c.LocationDesc,
+                                             Parent_CN_Doc_ID = p.DocumentId,
+                                             Patient_ID = p.PatientID,
+                                             Service_ID = c.ServiceID
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -304,14 +304,14 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                     masterEpisodeList.Add(
                         new Episode
                         {
-                            episodeID = episode.Episode_ID,
-                            episodeTypeID = (int)PicklistValues.EpisodeType.Team,
-                            locationDesc = episode.Episode_Location_Description,
-                            locationID = episode.Episode_Location_ID,
-                            referralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
-                            serviceID = episode.Service_ID,
-                            cnDocID = episode.Parent_CN_Doc_ID,
-                            patientID = episode.Patient_ID
+                            EpisodeID = episode.Episode_ID,
+                            EpisodeTypeID = (int)PicklistValues.EpisodeType.Team,
+                            LocationDesc = episode.Episode_Location_Description,
+                            LocationID = episode.Episode_Location_ID,
+                            ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                            ServiceID = episode.Service_ID,
+                            CnDocID = episode.Parent_CN_Doc_ID,
+                            PatientID = episode.Patient_ID
                         });
                 }
 
@@ -334,12 +334,12 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                 foreach (Episode episode in masterEpisodeList)
                 {
-                    Console.WriteLine($"Patient ID: {episode.patientID}");
-                    Console.WriteLine($"Episode Type: {(EpisodeType)episode.episodeTypeID}");
-                    Console.WriteLine($"Episode ID: {episode.episodeID}");
-                    Console.WriteLine($"Location ID: {episode.locationID}\n\t");
-                    Console.WriteLine($"Location description: {episode.locationDesc}");
-                    Console.WriteLine($"Parent CN Doc ID to use for child documents of this episode: {episode.cnDocID}\n");
+                    Console.WriteLine($"Patient ID: {episode.PatientID}");
+                    Console.WriteLine($"Episode Type: {(EpisodeType)episode.EpisodeTypeID}");
+                    Console.WriteLine($"Episode ID: {episode.EpisodeID}");
+                    Console.WriteLine($"Location ID: {episode.LocationID}\n\t");
+                    Console.WriteLine($"Location description: {episode.LocationDesc}");
+                    Console.WriteLine($"Parent CN Doc ID to use for child documents of this episode: {episode.CnDocID}\n");
                 }
             }
             else
@@ -348,7 +348,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                 foreach (Episode episode in masterEpisodeList)
                 {
-                    Console.WriteLine("{0,-24}{1,-16}{2,-16}{3,-16}{4,-40}{5,-5}", (EpisodeType)episode.episodeTypeID, episode.patientID, episode.episodeID, episode.locationID, episode.locationDesc, episode.cnDocID);
+                    Console.WriteLine("{0,-24}{1,-16}{2,-16}{3,-16}{4,-40}{5,-5}", (EpisodeType)episode.EpisodeTypeID, episode.PatientID, episode.EpisodeID, episode.LocationID, episode.LocationDesc, episode.CnDocID);
                 }
             }
 
