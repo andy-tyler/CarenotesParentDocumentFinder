@@ -42,20 +42,29 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                 Parallel.ForEach(patientIdentifiers, parallelOptions, identifier =>
                 {
-                    progress.Report((double)counterPosition / patientIdentifiers.Count);
-
-                    List<ParentDocument> parentDocuments = _common.GetParentDocuments(identifier);
-
-                    if (parentDocuments.Count > 0)
+                    try
                     {
+                        progress.Report((double)counterPosition / patientIdentifiers.Count);
 
-                        ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
+                        List<ParentDocument> parentDocuments = _common.GetParentDocuments(identifier);
 
-                        ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
+                        if (parentDocuments.Count > 0)
+                        {
 
-                        ListTeamEpisodeParentDocuments(parentDocuments, identifier);
+                            ListCommunityEpisodeParentDocuments(parentDocuments, identifier);
+
+                            ListInpatientEpisodeParentDocuments(parentDocuments, identifier);
+
+                            ListTeamEpisodeParentDocuments(parentDocuments, identifier);
+                        }
+                        counterPosition++;
                     }
-                    counterPosition++;
+                    catch(TaskCanceledException ex)
+                    {
+                        Console.WriteLine($"Issue encountered when processing patient ID{identifier}:\n\n{ex.Message}");
+                    }
+
+
                 }
                 );
 
