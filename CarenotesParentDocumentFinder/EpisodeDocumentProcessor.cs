@@ -84,7 +84,9 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
 
-            foreach (int? episodeId in episodeIds)
+            var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
+
+            Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
             {
                 if (episodeId != null)
                 {
@@ -103,11 +105,12 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                                              Parent_CN_Doc_ID = p.DocumentId,
                                              Patient_ID = p.PatientID,
                                              Service_ID = c.ServiceID,
-                                             Referral_ID = (int)p.ReferralId
+                                             Referral_ID = p.ReferralId
                                          }).ToList<MergedEpisodeData>();
 
                 }
-            }
+
+            });
 
             if (mergedEpisodeData.Any())
             {
@@ -182,30 +185,6 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             });
 
-            foreach (int? episodeId in episodeIds)
-            {
-                if (episodeId != null)
-                {
-
-                    inpatientEpisodes = ApiClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
-
-                    mergedEpisodeData = (from c in inpatientEpisodes
-                                         join p in parentDocuments
-                                         on c.EpisodeID equals p.ContextualId
-                                         select new MergedEpisodeData
-                                         {
-                                             Contextual_ID = p.ContextualId,
-                                             Episode_ID = c.EpisodeID,
-                                             Episode_Location_ID = c.LocationID,
-                                             Episode_Location_Description = c.LocationDesc,
-                                             Parent_CN_Doc_ID = p.DocumentId,
-                                             Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID,
-                                             Referral_ID = p.ReferralId
-                                         }).ToList<MergedEpisodeData>();
-
-                }
-            }
 
             if (mergedEpisodeData.Any())
             {
@@ -277,31 +256,6 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 }
 
             });
-
-            foreach (int? episodeId in episodeIds)
-            {
-                if (episodeId != null)
-                {
-
-                    teamEpisodes = ApiClient.GetTeamEpisodeDocuments(_apiClient, patientId, _pageSize);
-
-                    mergedEpisodeData = (from c in teamEpisodes
-                                         join p in parentDocuments
-                                         on c.EpisodeID equals p.ContextualId
-                                         select new MergedEpisodeData
-                                         {
-                                             Contextual_ID = p.ContextualId,
-                                             Episode_ID = c.EpisodeID,
-                                             Episode_Location_ID = c.LocationID,
-                                             Episode_Location_Description = c.LocationDesc,
-                                             Parent_CN_Doc_ID = p.DocumentId,
-                                             Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID,
-                                             Referral_ID = (int)p.ReferralId
-                                         }).ToList<MergedEpisodeData>();
-
-                }
-            }
 
             if (mergedEpisodeData.Any())
             {
