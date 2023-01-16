@@ -10,6 +10,6 @@
         public int ServiceID { get; set; }
         public int ReferralStatusID { get; set; }
         public int CnDocID { get; set; }
-        public int ReferralID { get; set; }
+        public int? ReferralID { get; set; }
     }
 }

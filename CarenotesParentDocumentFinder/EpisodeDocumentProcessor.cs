@@ -102,7 +102,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                                              Episode_Location_Description = c.LocationDesc,
                                              Parent_CN_Doc_ID = p.DocumentId,
                                              Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID
+                                             Service_ID = c.ServiceID,
+                                             Referral_ID = (int)p.ReferralId
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -123,7 +124,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                             ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
                             ServiceID = episode.Service_ID,
                             CnDocID = episode.Parent_CN_Doc_ID,
-                            PatientID = episode.Patient_ID
+                            PatientID = episode.Patient_ID,
+                            ReferralID = episode.Referral_ID
                         });
                 }
 
@@ -172,7 +174,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                                              Episode_Location_Description = c.LocationDesc,
                                              Parent_CN_Doc_ID = p.DocumentId,
                                              Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID
+                                             Service_ID = c.ServiceID,
+                                             Referral_ID = p.ReferralId
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -197,7 +200,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                                              Episode_Location_Description = c.LocationDesc,
                                              Parent_CN_Doc_ID = p.DocumentId,
                                              Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID
+                                             Service_ID = c.ServiceID,
+                                             Referral_ID = p.ReferralId
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -218,7 +222,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                             ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
                             ServiceID = episode.Service_ID,
                             CnDocID = episode.Parent_CN_Doc_ID,
-                            PatientID = episode.Patient_ID
+                            PatientID = episode.Patient_ID,
+                            ReferralID = episode.Referral_ID
                         });
                 }
 
@@ -265,7 +270,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                                              Episode_Location_Description = c.LocationDesc,
                                              Parent_CN_Doc_ID = p.DocumentId,
                                              Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID
+                                             Service_ID = c.ServiceID,
+                                             Referral_ID  = (int)p.ReferralId
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -290,7 +296,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                                              Episode_Location_Description = c.LocationDesc,
                                              Parent_CN_Doc_ID = p.DocumentId,
                                              Patient_ID = p.PatientID,
-                                             Service_ID = c.ServiceID
+                                             Service_ID = c.ServiceID,
+                                             Referral_ID = (int)p.ReferralId
                                          }).ToList<MergedEpisodeData>();
 
                 }
@@ -311,7 +318,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                             ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
                             ServiceID = episode.Service_ID,
                             CnDocID = episode.Parent_CN_Doc_ID,
-                            PatientID = episode.Patient_ID
+                            PatientID = episode.Patient_ID,
+                            ReferralID = episode.Referral_ID
                         });
                 }
 
@@ -335,6 +343,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 foreach (Episode episode in masterEpisodeList)
                 {
                     Console.WriteLine($"Patient ID: {episode.PatientID}");
+                    Console.WriteLine($"Referral ID: {episode.ReferralID}");
                     Console.WriteLine($"Episode Type: {(EpisodeType)episode.EpisodeTypeID}");
                     Console.WriteLine($"Episode ID: {episode.EpisodeID}");
                     Console.WriteLine($"Location ID: {episode.LocationID}\n\t");
@@ -344,11 +353,11 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
             }
             else
             {
-                Console.WriteLine($"\nEpisode Type\t\tPatient ID\tEpisode ID\tLocation ID\tLocation description\t\t\tCN Doc ID");
+                Console.WriteLine($"\nEpisode Type\t\tPatient ID\tReferral ID\tEpisode ID\tLocation ID\tLocation description\t\t\tCN Doc ID");
 
                 foreach (Episode episode in masterEpisodeList)
                 {
-                    Console.WriteLine("{0,-24}{1,-16}{2,-16}{3,-16}{4,-40}{5,-5}", (EpisodeType)episode.EpisodeTypeID, episode.PatientID, episode.EpisodeID, episode.LocationID, episode.LocationDesc, episode.CnDocID);
+                    Console.WriteLine($"{(EpisodeType)episode.EpisodeTypeID, -24}{episode.PatientID, -16}{episode.ReferralID, -16}{episode.EpisodeID, -16}{episode.LocationID, -16}{episode.LocationDesc, -40}{episode.CnDocID, -5}");
                 }
             }
 
