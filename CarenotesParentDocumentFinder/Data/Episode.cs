@@ -1,12 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace CarenotesParentDocumentFinder.Data
+﻿namespace CarenotesParentDocumentFinder.Data
 {
-    internal class Episode
+    public class Episode
     {
         public int PatientID { get; set; }
         public int EpisodeID { get; set; }
@@ -16,5 +10,6 @@ namespace CarenotesParentDocumentFinder.Data
         public int ServiceID { get; set; }
         public int ReferralStatusID { get; set; }
         public int CnDocID { get; set; }
+        public int? ReferralID { get; set; }
     }
 }

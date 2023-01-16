@@ -15,6 +15,7 @@ namespace CarenotesParentDocumentFinder.Data
         public string Episode_Location_Description { get; set; }
         public int Parent_CN_Doc_ID { get; set; }
         public int Service_ID { get; set; }
+        public int? Referral_ID { get; set; }
 
     }
 }
