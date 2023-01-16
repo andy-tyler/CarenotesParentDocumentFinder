@@ -6,13 +6,7 @@ using System.Threading.Tasks;
 
 namespace CarenotesParentDocumentFinder.Data
 {
-    public class InpatientEpisode
+    public class InpatientEpisode : Episode
     {
-        public int EpisodeID { get; set; }
-        public int EpisodeTypeID { get; set; }
-        public int? LocationID { get; set; }
-        public string LocationDesc { get; set; }
-        public int ServiceID { get; set; }
-        public int ReferralStatusID { get; set; }
     }
 }
