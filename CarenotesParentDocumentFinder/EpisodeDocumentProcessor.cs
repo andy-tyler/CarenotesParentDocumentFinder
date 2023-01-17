@@ -82,7 +82,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             List<CommunityEpisode> communityEpisodes;
 
-            List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+            List<MergedEpisodeData> mergedCommunityEpisodeData = new List<MergedEpisodeData>();
 
             var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
@@ -93,7 +93,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     communityEpisodes = ApiClient.GetCommunityEpisodeDocuments(_apiClient, patientId, _pageSize);
 
-                    mergedEpisodeData = (from c in communityEpisodes
+                    mergedCommunityEpisodeData = (from c in communityEpisodes
                                          join p in parentDocuments
                                          on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
@@ -112,10 +112,10 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             });
 
-            if (mergedEpisodeData.Any())
+            if (mergedCommunityEpisodeData.Any())
             {
 
-                foreach (MergedEpisodeData episode in mergedEpisodeData)
+                foreach (MergedEpisodeData episode in mergedCommunityEpisodeData)
                 {
                     masterEpisodeList.Add(
                         new Episode
@@ -155,7 +155,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
-            List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+            List<MergedEpisodeData> mergedInpatientEpisodeData = new List<MergedEpisodeData>();
 
             var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
@@ -166,7 +166,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     inpatientEpisodes = ApiClient.GetInpatientEpisodeDocuments(_apiClient, patientId, _pageSize);
 
-                    mergedEpisodeData = (from c in inpatientEpisodes
+                    mergedInpatientEpisodeData = (from c in inpatientEpisodes
                                          join p in parentDocuments
                                          on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
@@ -186,10 +186,10 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
             });
 
 
-            if (mergedEpisodeData.Any())
+            if (mergedInpatientEpisodeData.Any())
             {
 
-                foreach (MergedEpisodeData episode in mergedEpisodeData)
+                foreach (MergedEpisodeData episode in mergedInpatientEpisodeData)
                 {
                     masterEpisodeList.Add(
                         new Episode
@@ -227,7 +227,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             List<TeamEpisode> teamEpisodes = new List<TeamEpisode>();
 
-            List<MergedEpisodeData> mergedEpisodeData = new List<MergedEpisodeData>();
+            List<MergedEpisodeData> mergedTeamEpisodeData = new List<MergedEpisodeData>();
 
             var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
@@ -238,7 +238,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                     teamEpisodes = ApiClient.GetTeamEpisodeDocuments(_apiClient, patientId, _pageSize);
 
-                    mergedEpisodeData = (from c in teamEpisodes
+                    mergedTeamEpisodeData = (from c in teamEpisodes
                                          join p in parentDocuments
                                          on c.EpisodeID equals p.ContextualId
                                          select new MergedEpisodeData
@@ -257,10 +257,10 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             });
 
-            if (mergedEpisodeData.Any())
+            if (mergedTeamEpisodeData.Any())
             {
 
-                foreach (MergedEpisodeData episode in mergedEpisodeData)
+                foreach (MergedEpisodeData episode in mergedTeamEpisodeData)
                 {
                     masterEpisodeList.Add(
                         new Episode
