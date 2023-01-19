@@ -100,6 +100,9 @@
     <Compile Include="Data\PicklistValues.cs" />
     <Compile Include="Data\TeamEpisode.cs" />
     <Compile Include="EpisodeDocumentProcessor.cs" />
+    <Compile Include="Interfaces\IApiClient.cs" />
+    <Compile Include="Interfaces\ICommon.cs" />
+    <Compile Include="Interfaces\IEpisodeDocumentProcessor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Helpers\ProgressBar.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />

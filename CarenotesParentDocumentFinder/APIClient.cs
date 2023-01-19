@@ -1,4 +1,5 @@
 ﻿using CarenotesParentDocumentFinder.Data;
+using CarenotesParentDocumentFinder.Interfaces;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
@@ -10,13 +11,13 @@ using static CarenotesParentDocumentFinder.Data.PicklistValues;
 
 namespace CarenotesParentDocumentFinder
 {
-    public static class ApiClient
+    public class ApiClient : IApiClient
     {
-        static string _apiSessionToken;
+        string _apiSessionToken;
 
-        static int _totalPages = -1;
+        int _totalPages = -1;
 
-        public static void GetSessionToken(RestClient apiClient)
+        public void GetSessionToken(RestClient apiClient)
         {
 
             Console.WriteLine();
@@ -40,7 +41,7 @@ namespace CarenotesParentDocumentFinder
             CheckResponseStatus(response);
         }
 
-        private static SecureString GetPassword()
+        private SecureString GetPassword()
         {
             Console.Write("Carenotes password: ");
 
@@ -76,7 +77,7 @@ namespace CarenotesParentDocumentFinder
             return securePassword;
         }
 
-        private static void CheckResponseStatus(RestResponse response)
+        private void CheckResponseStatus(RestResponse response)
         {
             if (response.IsSuccessful)
             {
@@ -97,7 +98,7 @@ namespace CarenotesParentDocumentFinder
             }
         }
 
-        public static bool ApiIsAvailable(RestClient apiClient)
+        public bool ApiIsAvailable(RestClient apiClient)
         {
 
             RestRequest request = new RestRequest("ping", Method.Get);
@@ -108,7 +109,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static List<ParentDocument> GetParentDocuments(RestClient apiClient, int patientId, int objectTypeId, int pageSize)
+        public List<ParentDocument> GetParentDocuments(RestClient apiClient, int patientId, int objectTypeId, int pageSize)
         {
             try
             {
@@ -167,7 +168,7 @@ namespace CarenotesParentDocumentFinder
             }
         }
 
-        private static List<ParentDocument> ParseParentDocumentJson(string responseContent, int patientId)
+        private List<ParentDocument> ParseParentDocumentJson(string responseContent, int patientId)
         {
 
             List<ParentDocument> parentDocuments = new List<ParentDocument>();
@@ -204,7 +205,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static List<CommunityEpisode> GetCommunityEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
+        public List<CommunityEpisode> GetCommunityEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
         {
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
 
@@ -253,7 +254,7 @@ namespace CarenotesParentDocumentFinder
             }
         }
 
-        private static List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent)
+        private List<CommunityEpisode> ParseCommunityEpisodeJson(string responseContent)
         {
 
             List<CommunityEpisode> communityEpisodes = new List<CommunityEpisode>();
@@ -288,7 +289,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static List<InpatientEpisode> GetInpatientEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
+        public List<InpatientEpisode> GetInpatientEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
         {
 
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
@@ -339,7 +340,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        private static List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent)
+        private List<InpatientEpisode> ParseInpatientEpisodeJson(string responseContent)
         {
             List<InpatientEpisode> inpatientEpisodes = new List<InpatientEpisode>();
 
@@ -373,7 +374,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        public static List<TeamEpisode> GetTeamEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
+        public List<TeamEpisode> GetTeamEpisodeDocuments(RestClient apiClient, int patientId, int pageSize)
         {
             List<TeamEpisode> inpatientEpisodes = new List<TeamEpisode>();
 
@@ -422,7 +423,7 @@ namespace CarenotesParentDocumentFinder
 
         }
 
-        private static List<TeamEpisode> ParseTeamEpisodeJson(string responseContent)
+        private List<TeamEpisode> ParseTeamEpisodeJson(string responseContent)
         {
             List<TeamEpisode> teamEpisode = new List<TeamEpisode>();
 
@@ -455,7 +456,7 @@ namespace CarenotesParentDocumentFinder
             return teamEpisode;
         }
 
-        public static bool SessionTokenExists()
+        public bool SessionTokenExists()
         {
             if (string.IsNullOrEmpty(_apiSessionToken))
                 return false;

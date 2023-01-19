@@ -1,5 +1,6 @@
 ﻿using CarenotesParentDocumentFinder.Data;
 using CarenotesParentDocumentFinder.DocumentProcessors;
+using CarenotesParentDocumentFinder.Interfaces;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -16,11 +17,13 @@ namespace CarenotesParentDocumentFinder
 
         static int _pageSize = 100;
 
-        static readonly RestClient _apiClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
+        static readonly RestClient _restClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
         static int _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
 
-        static Common _common;
+        static ICommon _common;
+
+        static readonly IApiClient _apiClient = new ApiClient();
 
         static void Main(string[] args)
         {
@@ -31,7 +34,7 @@ namespace CarenotesParentDocumentFinder
 
             if (args.Length > 0 && args[0] == "/?") DisplayHelpText();
 
-            if (ApiClient.ApiIsAvailable(_apiClient))
+            if (_apiClient.ApiIsAvailable(_restClient))
             {
                 try
                 {
@@ -143,7 +146,7 @@ namespace CarenotesParentDocumentFinder
                     }
                     else
                     {
-                        _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+                        _common = new Common(_patientIDFilePath, _restClient, _objectTypeID, _pageSize, _apiClient);
 
                         ProcessPatientIDFile();
 
@@ -171,7 +174,7 @@ namespace CarenotesParentDocumentFinder
                 }
                 else
                 {
-                    _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+                    _common = new Common(_patientIDFilePath, _restClient, _objectTypeID, _pageSize, _apiClient);
 
                     Console.WriteLine($"\nProcessing file {_patientIDFilePath}.");
 
@@ -198,7 +201,7 @@ namespace CarenotesParentDocumentFinder
             if (_common.GetObjectTypeID() == 50)
             {
                 // Get available episode documents that can parent a clinical note document.
-                using (EpisodeDocumentProcessor episodeProcessor = new EpisodeDocumentProcessor(_apiClient, _outputFormat, _pageSize, patientIdentifiers, _common))
+                using (IEpisodeDocumentProcessor episodeProcessor = new EpisodeDocumentProcessor(_restClient, _outputFormat, _pageSize, patientIdentifiers, _common, _apiClient))
                 {
                     episodeProcessor.ProcessParentDocumentEpisodes(patientIdentifiers);
                 }
@@ -286,9 +289,9 @@ namespace CarenotesParentDocumentFinder
         static void RequestApiSessionToken()
         {
 
-            if (ApiClient.SessionTokenExists()) return;
+            if (_apiClient.SessionTokenExists()) return;
 
-            ApiClient.GetSessionToken(_apiClient);
+            _apiClient.GetSessionToken(_restClient);
 
         }
 
@@ -323,7 +326,7 @@ namespace CarenotesParentDocumentFinder
             {
                 _patientIDFilePath = fileList[i].FullName;
 
-                _common = new Common(_patientIDFilePath, _apiClient, _objectTypeID, _pageSize);
+                _common = new Common(_patientIDFilePath, _restClient, _objectTypeID, _pageSize, _apiClient);
 
                 Console.WriteLine($"\nProcessing file {i + 1} of {fileList.Count} - {fileList[i].FullName}.");
 
