@@ -1,4 +1,5 @@
 ﻿using CarenotesParentDocumentFinder.Data;
+using CarenotesParentDocumentFinder.Interfaces;
 using CsvHelper;
 using CsvHelper.Configuration;
 using RestSharp;
@@ -10,11 +11,11 @@ using System.IO;
 
 namespace CarenotesParentDocumentFinder
 {
-    public class Common
+    public class Common : ICommon
     {
         private readonly string _patientIDFilePath;
 
-        private readonly RestClient _apiClient;
+        private readonly RestClient _restClient;
 
         static readonly List<int> identifiers = new List<int>();
 
@@ -22,12 +23,15 @@ namespace CarenotesParentDocumentFinder
 
         private readonly int _pageSize;
 
-        public Common(string patientIDFilePath, RestClient restClient, int objectTypeID, int pageSize)
+        private readonly IApiClient _apiClient;
+
+        public Common(string patientIDFilePath, RestClient restClient, int objectTypeID, int pageSize, IApiClient apiClient)
         {
             this._patientIDFilePath = patientIDFilePath;
-            this._apiClient = restClient;
+            this._restClient = restClient;
             this._objectTypeID = objectTypeID;
             this._pageSize = pageSize;
+            this._apiClient = apiClient;
         }
 
         public List<int> GetPatientIdentifiersFromFile()
@@ -64,7 +68,7 @@ namespace CarenotesParentDocumentFinder
 
             List<ParentDocument> parentDocuments = new List<ParentDocument>();
 
-            parentDocuments.AddRange(ApiClient.GetParentDocuments(_apiClient, patientID, _objectTypeID, _pageSize));
+            parentDocuments.AddRange(_apiClient.GetParentDocuments(_restClient, patientID, _objectTypeID, _pageSize));
 
             return parentDocuments;
 
