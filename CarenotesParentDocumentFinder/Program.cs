@@ -30,20 +30,13 @@ namespace CarenotesParentDocumentFinder
 
         static IApiClient _apiClient;
 
-        static TelemetryConfiguration configuration = TelemetryConfiguration.CreateDefault();
+        static readonly TelemetryConfiguration configuration = TelemetryConfiguration.CreateDefault();
 
         static TelemetryClient telemetryClient;
 
         static void Main(string[] args)
         {
-
-            
-            configuration.ConnectionString = "InstrumentationKey=b433954c-2f41-404b-87a3-f2be44feaed4;IngestionEndpoint=https://uksouth-1.in.applicationinsights.azure.com/;LiveEndpoint=https://uksouth.livediagnostics.monitor.azure.com/";
-            
-            telemetryClient = new TelemetryClient(configuration);
-
-            telemetryClient.TrackEvent("ApplicationStart");
-            telemetryClient.TrackTrace("Application started");
+            InitialiseApplicationInsightsTelemetryClient();
 
             _apiClient = new ApiClient(telemetryClient);
 
@@ -65,55 +58,12 @@ namespace CarenotesParentDocumentFinder
 
                     telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API", Success = true, Duration = _apiClient.ApiResponseTime(_restClient), RunLocation = "Application" });
 
-                    try
-                    {
-                        ProcessStartupParameters(args);
-
-                    }
-                    catch (FileNotFoundException ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() {  Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp= DateTime.Now });
-                        Console.WriteLine(ex.Message);
-                    }
-                    catch (ArgumentException ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
-                        Console.WriteLine(ex.Message);
-                    }
-                    catch (UriFormatException ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
-                        Console.WriteLine(ex.Message);
-                    }
-                    catch (WebException ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
-                        Console.WriteLine(ex.Message);
-                    }
-                    catch (UnauthorizedAccessException ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now, Message = "API Authorisation failure." });
-                        Console.WriteLine(ex.Message);
-                    }
-                    catch (AggregateException ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex.Flatten(), SeverityLevel = SeverityLevel.Critical, Timestamp = DateTime.Now, Message = "API Authorisation failure." });
-                    }
-                    catch (Exception ex)
-                    {
-                        telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
-                        Console.WriteLine(ex.ToString());
-                        Console.WriteLine(ex.Message.ToString());
-                        Console.WriteLine(ex.StackTrace.ToString());
-                    }
+                    ProcessingBootstrapper(args);
                 }
                 else
                 {
-                    TelemetryContext telemetryContext = new TelemetryContext();
-
-                    
-                    
                     telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API", Success = false, RunLocation = "Application" });
+
                     Console.WriteLine($"The API service at {ConfigurationManager.AppSettings["APIBaseURL"]} is not available, please contact AHC Support for further assistance.");
                 }
             }
@@ -133,60 +83,109 @@ namespace CarenotesParentDocumentFinder
             telemetryClient.Flush();
         }
 
-        static void ProcessStartupParameters(string[] startupArgs)
+        private static void ProcessingBootstrapper(string[] args)
         {
-            if (startupArgs.Length == 0)
+            try
             {
-                throw new ArgumentException("No switch has been specified to set the child document type. Re-run with /? for available options.");
-            }
+                if (args.Length == 0)
+                {
+                    throw new ArgumentException("No switch has been specified to set the child document type. Re-run with /? for available options.");
+                }
 
-            switch (ConfigurationManager.AppSettings["OutputFormat"])
-            {
-                case "Verbose":
-                    _outputFormat = (int)PicklistValues.OutputMethod.Verbose;
-                    break;
-                default:
-                    _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
-                    break;
-            }
-
-            if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize)) _pageSize = 100;
-
-            SetCSVFilePath(startupArgs);
-
-            Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
-
-            RequestApiSessionToken();
-
-            switch (startupArgs[0])
-            {
-                case "/notes":
-                    {
-                        telemetryClient.TrackEvent("ProcessNotes");
-                        telemetryClient.TrackTrace("Retrieving parent document details for clinical notes.");
-                        ProcessNotes();
-
+                switch (ConfigurationManager.AppSettings["OutputFormat"])
+                {
+                    case "Verbose":
+                        _outputFormat = (int)PicklistValues.OutputMethod.Verbose;
                         break;
-                    }
-                case "/attachments":
-                    {
-                        telemetryClient.TrackEvent("ProcessAttachments");
-                        telemetryClient.TrackTrace("Retrieving parent document details for attachments.");
-                        ProcessAttachments();
-
+                    default:
+                        _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
                         break;
-                    }
-                default:
-                    {
-                        telemetryClient.TrackEvent("InvalidStartRequest");
-                        telemetryClient.TrackException(new ArgumentException("Invalid command switch specified on application startup."));
-                        throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
-                    }
+                }
+
+                if (!int.TryParse(ConfigurationManager.AppSettings["PageSize"], out _pageSize)) _pageSize = 100;
+
+                SetCSVFilePath(args);
+
+                Console.WriteLine($"Connecting to API hosted at: {ConfigurationManager.AppSettings["APIBaseURL"]}");
+
+                RequestApiSessionToken();
+
+                switch (args[0])
+                {
+                    case "/notes":
+                        {
+                            telemetryClient.TrackEvent("ProcessNotes");
+                            telemetryClient.TrackTrace("Retrieving parent document details for clinical notes.");
+                            ProcessNotes();
+
+                            break;
+                        }
+                    case "/attachments":
+                        {
+                            telemetryClient.TrackEvent("ProcessAttachments");
+                            telemetryClient.TrackTrace("Retrieving parent document details for attachments.");
+                            ProcessAttachments();
+
+                            break;
+                        }
+                    default:
+                        {
+                            telemetryClient.TrackEvent("InvalidStartRequest");
+                            telemetryClient.TrackException(new ArgumentException("Invalid command switch specified on application startup."));
+                            throw new ArgumentException("Invalid command switch specified. Re-run with the /? switch for available options.");
+                        }
+                }
+
+                Console.WriteLine("\nProcessing complete.");
+                telemetryClient.TrackTrace("Processing complete.");
+
             }
+            catch (FileNotFoundException ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
+                Console.WriteLine(ex.Message);
+            }
+            catch (ArgumentException ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
+                Console.WriteLine(ex.Message);
+            }
+            catch (UriFormatException ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
+                Console.WriteLine(ex.Message);
+            }
+            catch (WebException ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
+                Console.WriteLine(ex.Message);
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now, Message = "API Authorisation failure." });
+                Console.WriteLine(ex.Message);
+            }
+            catch (AggregateException ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex.Flatten(), SeverityLevel = SeverityLevel.Critical, Timestamp = DateTime.Now, Message = "API Authorisation failure." });
+            }
+            catch (Exception ex)
+            {
+                telemetryClient.TrackException(new ExceptionTelemetry() { Exception = ex, SeverityLevel = SeverityLevel.Error, Timestamp = DateTime.Now });
+                Console.WriteLine(ex.ToString());
+                Console.WriteLine(ex.Message.ToString());
+                Console.WriteLine(ex.StackTrace.ToString());
+            }
+        }
 
-            Console.WriteLine("\nProcessing complete.");
-            telemetryClient.TrackTrace("Processing complete.");
+        private static void InitialiseApplicationInsightsTelemetryClient()
+        {
+            configuration.ConnectionString = "InstrumentationKey=b433954c-2f41-404b-87a3-f2be44feaed4;IngestionEndpoint=https://uksouth-1.in.applicationinsights.azure.com/;LiveEndpoint=https://uksouth.livediagnostics.monitor.azure.com/";
 
+            telemetryClient = new TelemetryClient(configuration);
+
+            telemetryClient.TrackEvent("ApplicationStart");
+            telemetryClient.TrackTrace("Application started");
         }
 
         private static void ProcessAttachments()
@@ -257,9 +256,12 @@ namespace CarenotesParentDocumentFinder
 
             List<int> patientIdentifiers = _common.GetPatientIdentifiersFromFile();
 
-            var sample = new MetricTelemetry();
-            sample.Name = "IdentiferFileIDCount";
-            sample.Sum = patientIdentifiers.Count;
+            var sample = new MetricTelemetry
+            {
+                Name = "IdentiferFileIDCount",
+                Sum = patientIdentifiers.Count
+            };
+
             telemetryClient.TrackMetric(sample);
 
             Console.WriteLine("Requesting data from Carenotes...");
@@ -282,7 +284,7 @@ namespace CarenotesParentDocumentFinder
 
             Console.WriteLine($"\nTotal run time: {String.Format("{0:00}:{1:00}:{2:00}", ts.Hours, ts.Minutes, ts.Seconds / 10)}");
 
-            telemetryClient.TrackDependency("StartTime","Duration","Result",processStarted, processStopWatch.Elapsed, true );
+            telemetryClient.TrackDependency("StartTime", "Duration", "Result", processStarted, processStopWatch.Elapsed, true);
 
         }
 
@@ -377,7 +379,7 @@ namespace CarenotesParentDocumentFinder
 
         static void DisplayHelpText()
         {
-            
+
             Console.WriteLine("This utility requires a command line argument to define what document type should be processed.\n");
             Console.WriteLine("This version supports the following document types:\n");
             Console.WriteLine("\t/notes\n\t/attachments\n");
@@ -391,9 +393,12 @@ namespace CarenotesParentDocumentFinder
         {
             List<FileInfo> fileList = GetFileList(_patientIDFilePath);
 
-            var sample = new MetricTelemetry();
-            sample.Name = "ProcessingBatchFileCount";
-            sample.Sum = fileList.Count;
+            var sample = new MetricTelemetry
+            {
+                Name = "ProcessingBatchFileCount",
+                Sum = fileList.Count
+            };
+
             telemetryClient.TrackMetric(sample);
 
             for (int i = 0; i < fileList.Count; i++)
