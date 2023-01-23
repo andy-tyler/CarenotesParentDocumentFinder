@@ -118,20 +118,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                         communityEpisodes = _apiClient.GetCommunityEpisodeDocuments(_restClient, patientId, _pageSize);
 
-                        mergedCommunityEpisodeData = (from c in communityEpisodes
-                                                      join p in parentDocuments
-                                                      on c.EpisodeID equals p.ContextualId
-                                                      select new MergedEpisodeData
-                                                      {
-                                                          Contextual_ID = p.ContextualId,
-                                                          Episode_ID = c.EpisodeID,
-                                                          Episode_Location_ID = c.LocationID,
-                                                          Episode_Location_Description = c.LocationDesc,
-                                                          Parent_CN_Doc_ID = p.DocumentId,
-                                                          Patient_ID = p.PatientID,
-                                                          Service_ID = c.ServiceID,
-                                                          Referral_ID = p.ReferralId
-                                                      }).ToList<MergedEpisodeData>();
+                        mergedCommunityEpisodeData = GetCommunityEpisodeData(parentDocuments, communityEpisodes);
 
                     }
 
@@ -154,19 +141,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                 foreach (MergedEpisodeData episode in mergedCommunityEpisodeData)
                 {
-                    masterEpisodeList.Add(
-                        new Episode
-                        {
-                            EpisodeID = episode.Episode_ID,
-                            EpisodeTypeID = (int)PicklistValues.EpisodeType.Community,
-                            LocationDesc = episode.Episode_Location_Description,
-                            LocationID = episode.Episode_Location_ID,
-                            ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
-                            ServiceID = episode.Service_ID,
-                            CnDocID = episode.Parent_CN_Doc_ID,
-                            PatientID = episode.Patient_ID,
-                            ReferralID = episode.Referral_ID
-                        });
+                    AddCommunityEpisodes(episode);
                 }
 
 
@@ -180,6 +155,41 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             }
 
+        }
+
+        private void AddCommunityEpisodes(MergedEpisodeData episode)
+        {
+            masterEpisodeList.Add(
+                new Episode
+                {
+                    EpisodeID = episode.Episode_ID,
+                    EpisodeTypeID = (int)PicklistValues.EpisodeType.Community,
+                    LocationDesc = episode.Episode_Location_Description,
+                    LocationID = episode.Episode_Location_ID,
+                    ReferralStatusID = (int)PicklistValues.ReferralStatus.Accepted,
+                    ServiceID = episode.Service_ID,
+                    CnDocID = episode.Parent_CN_Doc_ID,
+                    PatientID = episode.Patient_ID,
+                    ReferralID = episode.Referral_ID
+                });
+        }
+
+        private static List<MergedEpisodeData> GetCommunityEpisodeData(List<ParentDocument> parentDocuments, List<CommunityEpisode> communityEpisodes)
+        {
+            return (from c in communityEpisodes
+                    join p in parentDocuments
+                    on c.EpisodeID equals p.ContextualId
+                    select new MergedEpisodeData
+                    {
+                        Contextual_ID = p.ContextualId,
+                        Episode_ID = c.EpisodeID,
+                        Episode_Location_ID = c.LocationID,
+                        Episode_Location_Description = c.LocationDesc,
+                        Parent_CN_Doc_ID = p.DocumentId,
+                        Patient_ID = p.PatientID,
+                        Service_ID = c.ServiceID,
+                        Referral_ID = p.ReferralId
+                    }).ToList<MergedEpisodeData>();
         }
 
         private void ListInpatientEpisodeParentDocuments(List<ParentDocument> parentDocuments, int patientId)
