@@ -1,5 +1,6 @@
 ﻿using CarenotesParentDocumentFinder.Data;
 using RestSharp;
+using System;
 using System.Collections.Generic;
 
 namespace CarenotesParentDocumentFinder.Interfaces
@@ -13,5 +14,7 @@ namespace CarenotesParentDocumentFinder.Interfaces
         void GetSessionToken(RestClient apiClient);
         List<TeamEpisode> GetTeamEpisodeDocuments(RestClient apiClient, int patientId, int pageSize);
         bool SessionTokenExists();
+
+        TimeSpan ApiResponseTime(RestClient apiClient);
     }
 }

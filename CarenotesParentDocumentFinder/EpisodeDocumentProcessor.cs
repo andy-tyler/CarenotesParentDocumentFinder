@@ -2,6 +2,8 @@
 using CarenotesParentDocumentFinder.Helpers;
 using CarenotesParentDocumentFinder.Interfaces;
 using CsvHelper;
+using Microsoft.ApplicationInsights;
+using Microsoft.ApplicationInsights.DataContracts;
 using RestSharp;
 using System;
 using System.Collections.Generic;
@@ -24,9 +26,9 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
         private bool disposedValue;
         readonly private ICommon _common;
         private readonly IApiClient _apiClient;
+        private readonly TelemetryClient _telemetryClient;
 
-
-        public EpisodeDocumentProcessor(RestClient restClient, int outputFormat, int pageSize, List<int> identifiers, ICommon common, IApiClient apiClient)
+        public EpisodeDocumentProcessor(RestClient restClient, int outputFormat, int pageSize, List<int> identifiers, ICommon common, IApiClient apiClient, TelemetryClient telemetryClient)
         {
             this._restClient = restClient;
             this._outputFormat = outputFormat;
@@ -34,6 +36,7 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
             this._identifiers = identifiers;
             this._common = common;
             this._apiClient = apiClient;
+            this._telemetryClient = telemetryClient;
         }
 
         public void ProcessParentDocumentEpisodes(List<int> patientIdentifiers)
@@ -44,7 +47,11 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
                 var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
-                Parallel.ForEach(patientIdentifiers, parallelOptions, identifier =>
+                List<Exception> ae = new List<Exception>();
+
+                try
+                {
+                    Parallel.ForEach(patientIdentifiers, parallelOptions, identifier =>
                 {
                     progress.Report((double)counterPosition / patientIdentifiers.Count);
 
@@ -62,6 +69,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                     counterPosition++;
                 }
                 );
+                }
+                catch (Exception ex)
+                {
+                    ae.Add(ex);
+                }
+
+                if (ae.Count > 0)
+                {
+                    throw new AggregateException("Errors encountered when processing community episodes.", ae);
+                }
 
             }
 
@@ -90,31 +107,47 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
-            Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
+            List<Exception> ae = new List<Exception>();
+
+            try
             {
-                if (episodeId != null)
+                Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
                 {
+                    if (episodeId != null)
+                    {
 
-                    communityEpisodes = _apiClient.GetCommunityEpisodeDocuments(_restClient, patientId, _pageSize);
+                        communityEpisodes = _apiClient.GetCommunityEpisodeDocuments(_restClient, patientId, _pageSize);
 
-                    mergedCommunityEpisodeData = (from c in communityEpisodes
-                                                  join p in parentDocuments
-                                                  on c.EpisodeID equals p.ContextualId
-                                                  select new MergedEpisodeData
-                                                  {
-                                                      Contextual_ID = p.ContextualId,
-                                                      Episode_ID = c.EpisodeID,
-                                                      Episode_Location_ID = c.LocationID,
-                                                      Episode_Location_Description = c.LocationDesc,
-                                                      Parent_CN_Doc_ID = p.DocumentId,
-                                                      Patient_ID = p.PatientID,
-                                                      Service_ID = c.ServiceID,
-                                                      Referral_ID = p.ReferralId
-                                                  }).ToList<MergedEpisodeData>();
+                        mergedCommunityEpisodeData = (from c in communityEpisodes
+                                                      join p in parentDocuments
+                                                      on c.EpisodeID equals p.ContextualId
+                                                      select new MergedEpisodeData
+                                                      {
+                                                          Contextual_ID = p.ContextualId,
+                                                          Episode_ID = c.EpisodeID,
+                                                          Episode_Location_ID = c.LocationID,
+                                                          Episode_Location_Description = c.LocationDesc,
+                                                          Parent_CN_Doc_ID = p.DocumentId,
+                                                          Patient_ID = p.PatientID,
+                                                          Service_ID = c.ServiceID,
+                                                          Referral_ID = p.ReferralId
+                                                      }).ToList<MergedEpisodeData>();
 
-                }
+                    }
 
-            });
+                });
+            }
+            catch (Exception ex)
+            {
+                ae.Add(ex);
+            }
+
+            if (ae.Count > 0)
+            {
+                throw new AggregateException("Errors encountered when processing community episodes.", ae);
+            }
+
+
 
             if (mergedCommunityEpisodeData.Any())
             {
@@ -163,7 +196,12 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
-            Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
+            List<Exception> ae = new List<Exception>();
+
+            try
+            {
+
+                Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
             {
                 if (episodeId != null)
                 {
@@ -189,6 +227,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             });
 
+            }
+            catch (Exception ex)
+            {
+                ae.Add(ex);
+            }
+
+            if (ae.Count > 0)
+            {
+                throw new AggregateException("Errors encountered when processing community episodes.", ae);
+            }
 
             if (mergedInpatientEpisodeData.Any())
             {
@@ -235,7 +283,12 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
 
             var parallelOptions = new ParallelOptions{ MaxDegreeOfParallelism = System.Environment.ProcessorCount};
 
-            Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
+            List<Exception> ae = new List<Exception>();
+
+            try
+            {
+
+                Parallel.ForEach(episodeIds, parallelOptions, episodeId =>
             {
                 if (episodeId != null)
                 {
@@ -260,6 +313,17 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 }
 
             });
+
+            }
+            catch (Exception ex)
+            {
+                ae.Add(ex);
+            }
+
+            if (ae.Count > 0)
+            {
+                throw new AggregateException("Errors encountered when processing community episodes.", ae);
+            }
 
             if (mergedTeamEpisodeData.Any())
             {
@@ -319,6 +383,16 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
                 }
             }
 
+            var identifiersSample = new MetricTelemetry();
+            identifiersSample.Name = "PatientsProcessed";
+            identifiersSample.Sum = _identifiers.Count;
+            _telemetryClient.TrackMetric(identifiersSample);
+
+            var sample = new MetricTelemetry();
+            sample.Name = "DocumentsFound";
+            sample.Sum = masterEpisodeList.Count;
+            _telemetryClient.TrackMetric(sample);
+
             Console.WriteLine($"\n{_identifiers.Count} patients processed, {masterEpisodeList.Count} documents found.");
 
         }
@@ -336,6 +410,8 @@ namespace CarenotesParentDocumentFinder.DocumentProcessors
             }
 
             Console.WriteLine($"\nParent document identifiers written to: " + di.FullName + "\\parent-identifiers-" + filestringtime + ".csv");
+
+            _telemetryClient.TrackEvent("WriteResultsFile");
         }
 
         protected virtual void Dispose(bool disposing)

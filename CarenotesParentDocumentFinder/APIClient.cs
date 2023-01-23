@@ -1,9 +1,12 @@
 ﻿using CarenotesParentDocumentFinder.Data;
 using CarenotesParentDocumentFinder.Interfaces;
+using Microsoft.ApplicationInsights.DataContracts;
+using Microsoft.ApplicationInsights;
 using Newtonsoft.Json.Linq;
 using RestSharp;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Security;
@@ -16,6 +19,13 @@ namespace CarenotesParentDocumentFinder
         string _apiSessionToken;
 
         int _totalPages = -1;
+
+        readonly TelemetryClient _telemetryClient;
+
+        public ApiClient(TelemetryClient telemetryClient)
+        {
+            _telemetryClient = telemetryClient;
+        }
 
         public void GetSessionToken(RestClient apiClient)
         {
@@ -36,7 +46,15 @@ namespace CarenotesParentDocumentFinder
 
             request.AddParameter("Password", new NetworkCredential("", securePassword).Password);
 
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
             var response = apiClient.ExecutePost(request);
+
+            sw.Stop();
+
+            _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Session Token Request", Success = true, Duration = sw.Elapsed, RunLocation = "Application" });
 
             CheckResponseStatus(response);
         }
@@ -109,6 +127,23 @@ namespace CarenotesParentDocumentFinder
 
         }
 
+        public TimeSpan ApiResponseTime(RestClient apiClient)
+        {
+
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
+            RestRequest request = new RestRequest("ping", Method.Get);
+
+            var response = apiClient.ExecuteGet(request);
+
+            sw.Stop();
+
+            return sw.Elapsed;
+
+        }
+
         public List<ParentDocument> GetParentDocuments(RestClient apiClient, int patientId, int objectTypeId, int pageSize)
         {
             try
@@ -122,10 +157,17 @@ namespace CarenotesParentDocumentFinder
 
                 request.AddHeader("X-Session-Id", _apiSessionToken);
 
+                Stopwatch sw = new Stopwatch();
+
+                sw.Start();
+
                 var response = apiClient.ExecuteGet(request);
+                sw.Stop();
 
                 if (response.IsSuccessful)
                 {
+                    _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Parent Documents", Success = true, Duration = sw.Elapsed, RunLocation = "Application" });
+
                     parentDocuments.AddRange(ParseParentDocumentJson(response.Content, patientId));
 
 
@@ -157,6 +199,7 @@ namespace CarenotesParentDocumentFinder
                 }
                 else
                 {
+                    _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Parent Documents", Success = false, Duration = sw.Elapsed, RunLocation = "Application" });
                     throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
                 }
 
@@ -215,11 +258,18 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
             var response = apiClient.ExecuteGet(request);
 
+            sw.Stop();
 
             if (response.IsSuccessful)
             {
+                _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Community Episode", Success = true, Duration = sw.Elapsed, RunLocation = "Application" });
+
                 communityEpisodes.AddRange(ParseCommunityEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
@@ -233,7 +283,12 @@ namespace CarenotesParentDocumentFinder
 
                         request = new RestRequest($"episodes.json?PatientId={patientId}&episodeTypeID={(int)EpisodeType.Community}&ReferralStatusId={(int)ReferralStatus.Accepted}&PageIndex={currentPageNumber}&PageSize={pageSize}", Method.Get);
 
+                        sw.Reset();
+                        sw.Start();
+
                         response = apiClient.ExecuteGet(request);
+                        _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Community Episode", Success = true, Duration = sw.Elapsed, RunLocation = "Application" });
+                        sw.Stop();
 
                         if (response.IsSuccessful)
                         {
@@ -250,6 +305,7 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
+                _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Community Episode", Success = false, Duration = sw.Elapsed, RunLocation = "Application" });
                 throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
         }
@@ -300,10 +356,18 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
             var response = apiClient.ExecuteGet(request);
+
+            sw.Stop();
 
             if (response.IsSuccessful)
             {
+                _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Inpatient Episode", Success = true, Duration = sw.Elapsed, RunLocation = "Application" });
+
                 inpatientEpisodes.AddRange(ParseInpatientEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
@@ -334,6 +398,7 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
+                _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Inpatient Episode", Success = false, Duration = sw.Elapsed, RunLocation = "Application" });
                 throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
 
@@ -384,10 +449,18 @@ namespace CarenotesParentDocumentFinder
 
             request.AddHeader("X-Session-Id", _apiSessionToken);
 
+            Stopwatch sw = new Stopwatch();
+
+            sw.Start();
+
             var response = apiClient.ExecuteGet(request);
+
+            sw.Stop();
 
             if (response.IsSuccessful)
             {
+                _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Team Episode", Success = true, Duration = sw.Elapsed, RunLocation = "Application" });
+
                 inpatientEpisodes.AddRange(ParseTeamEpisodeJson(response.Content));
 
                 if (_totalPages > 1)
@@ -418,6 +491,8 @@ namespace CarenotesParentDocumentFinder
             }
             else
             {
+                _telemetryClient.TrackAvailability(new AvailabilityTelemetry { Name = "Carenotes API Endpoint Team Episode", Success = false, Duration = sw.Elapsed, RunLocation = "Application" });
+
                 throw new WebException($"API request was unsucessful: {response.ErrorException.Message}");
             }
 
