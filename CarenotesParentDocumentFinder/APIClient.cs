@@ -136,7 +136,7 @@ namespace CarenotesParentDocumentFinder
 
             RestRequest request = new RestRequest("ping", Method.Get);
 
-            var response = apiClient.ExecuteGet(request);
+            apiClient.ExecuteGet(request);
 
             sw.Stop();
 
