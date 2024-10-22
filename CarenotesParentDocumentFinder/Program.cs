@@ -22,7 +22,7 @@ namespace CarenotesParentDocumentFinder
 
         static int _pageSize = 100;
 
-        static readonly RestClient _restClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { MaxTimeout = -1, UserAgent = "Carenotes Parent Document Finder"});
+        static readonly RestClient _restClient = new RestClient(new RestClientOptions(ConfigurationManager.AppSettings["APIBaseURL"]) { Timeout = -1, UserAgent = "Carenotes Parent Document Finder"});
 
         static int _outputFormat = (int)PicklistValues.OutputMethod.Tabbed;
 
